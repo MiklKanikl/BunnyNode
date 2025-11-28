@@ -1,0 +1,74 @@
+{
+    "nodes": [
+        {
+            "id": 5,
+            "type": "ellipse",
+            "x": 1244.0,
+            "y": 948.0,
+            "width": 80.0,
+            "height": 80.0,
+            "text": ""
+        },
+        {
+            "id": 4,
+            "type": "ellipse",
+            "x": 1822.0,
+            "y": 742.0,
+            "width": 80.0,
+            "height": 80.0,
+            "text": "egg"
+        },
+        {
+            "id": 1,
+            "type": "rect",
+            "x": 1483.0,
+            "y": 1086.0,
+            "width": 140.0,
+            "height": 70.0,
+            "text": ""
+        },
+        {
+            "id": 2,
+            "type": "ellipse",
+            "x": 1196.0,
+            "y": 741.0,
+            "width": 80.0,
+            "height": 80.0,
+            "text": "egg"
+        }
+    ],
+    "edges": [
+        {
+            "start": 1,
+            "end": 5
+        },
+        {
+            "start": 1,
+            "end": 5
+        },
+        {
+            "start": 1,
+            "end": 5
+        },
+        {
+            "start": 2,
+            "end": 5
+        },
+        {
+            "start": 4,
+            "end": 1
+        },
+        {
+            "start": 4,
+            "end": 1
+        },
+        {
+            "start": 4,
+            "end": 5
+        },
+        {
+            "start": 1,
+            "end": 2
+        }
+    ]
+}
