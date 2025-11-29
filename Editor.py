@@ -97,9 +97,7 @@ class MyScene(QGraphicsScene):
             "edges": []
         }
         for item in self.items():
-            print(item)
             if isinstance(item, NodeRect) or isinstance(item, NodeEllipse):
-                print(item)
                 node = {
                     "id": item.id,
                     "type": "rect" if isinstance(item, NodeRect) else "ellipse",
@@ -107,7 +105,7 @@ class MyScene(QGraphicsScene):
                     "y": item.scenePos().y(),
                     "width": item.rect().width(),
                     "height": item.rect().height(),
-                    #"color": item.color,
+                    "color": item.colour,
                     "text": item.text
                 }
                 data["nodes"].append(node)
@@ -135,15 +133,13 @@ class MyScene(QGraphicsScene):
                 node = NodeRect(
                     n["x"], n["y"],
                     n["width"], n["height"],
-                    QColor(0, 150, 255)
-                    ##n["color"]
+                    QColor(n["color"][0], n["color"][1], n["color"][2])
                 )
             elif n["type"] == "ellipse":
                 node = NodeEllipse(
                     n["x"], n["y"],
                     n["width"], n["height"],
-                    QColor(0, 150, 255)
-                    ##n["color"]
+                    QColor(n["color"][0], n["color"][1], n["color"][2])
                 )
             node.id = n["id"]
             node.update_text(n.get("text", ""))

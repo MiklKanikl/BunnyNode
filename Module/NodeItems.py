@@ -56,6 +56,7 @@ class NodeRect(QGraphicsRectItem):
         NodeRect._id_counter += 1
         self.edges = []
         self.setPos(x, y)
+        self.colour = [color.red(), color.green(), color.blue()]
 
         self.setFlags(
             QGraphicsRectItem.GraphicsItemFlag.ItemIsMovable |
@@ -141,6 +142,7 @@ class NodeRect(QGraphicsRectItem):
             if new_color.isValid():
                 self.setBrush(new_color)
                 self.color = new_color
+                self.colour = [new_color.red(), new_color.green(), new_color.blue()]
             return
         
         # Aktion 4: Kanten löschen
@@ -160,6 +162,7 @@ class NodeEllipse(QGraphicsEllipseItem):
         NodeEllipse._id_counter += 1
         self.edges = []
         self.setPos(x, y)
+        self.colour = [color.red(), color.green(), color.blue()]
 
         self.setFlags(
             QGraphicsEllipseItem.GraphicsItemFlag.ItemIsMovable |
@@ -245,6 +248,7 @@ class NodeEllipse(QGraphicsEllipseItem):
             if new_color.isValid():
                 self.setBrush(new_color)
                 self.color = new_color
+                self.colour = [new_color.red(), new_color.green(), new_color.blue()]
             return
         
         # Aktion 4: Kanten löschen

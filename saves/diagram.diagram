@@ -1,0 +1,38 @@
+{
+    "nodes": [
+        {
+            "id": 1,
+            "type": "rect",
+            "x": 1548.0,
+            "y": 978.0,
+            "width": 140.0,
+            "height": 70.0,
+            "color": [
+                255,
+                85,
+                0
+            ],
+            "text": "wwgerg"
+        },
+        {
+            "id": 2,
+            "type": "ellipse",
+            "x": 1057.0,
+            "y": 715.0,
+            "width": 80.0,
+            "height": 80.0,
+            "color": [
+                85,
+                255,
+                0
+            ],
+            "text": "wfw"
+        }
+    ],
+    "edges": [
+        {
+            "start": 1,
+            "end": 2
+        }
+    ]
+}
