@@ -4,10 +4,10 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtGui import QColor, QPainter, QCursor, QAction
 from PyQt6.QtCore import Qt, QPoint, QTimer
-from Module.NodeItems import NodeRect, NodeEllipse, EdgeItem
+from utils.NodeItems import NodeRect, NodeEllipse, EdgeItem
 import sys, os
 
-class MyScene(QGraphicsScene):
+class MainScene(QGraphicsScene):
     def __init__(self):
         super().__init__()
         self.current_color = QColor(0, 150, 255)  # Standardfarbe
@@ -171,10 +171,6 @@ class GraphicsView(QGraphicsView):
     #     Z O O M
     # ---------------------
     def wheelEvent(self, event):
-        if not event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-            # normales Scrollen
-            return super().wheelEvent(event)
-
         angle = event.angleDelta().y()
 
         if angle > 0 and self.zoom < self.zoom_range[1]:
@@ -237,8 +233,8 @@ class GraphicsView(QGraphicsView):
 
 app = QApplication(sys.argv)
 
-scene = MyScene()
-scene.setSceneRect(0, 0, 2000, 1600)
+scene = MainScene()
+scene.setSceneRect(0, 0, 3000, 2400)
 
 view = GraphicsView(scene)
 view.showMaximized()
