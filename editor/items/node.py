@@ -1,50 +1,9 @@
 from PyQt6.QtWidgets import (
-    QApplication, QGraphicsScene, QGraphicsView,
-    QGraphicsRectItem, QGraphicsEllipseItem, QGraphicsTextItem, QColorDialog,
-    QInputDialog, QMenu, QGraphicsPathItem, QGraphicsItem
+    QGraphicsRectItem, QGraphicsEllipseItem, QGraphicsTextItem, QInputDialog,
+    QMenu, QGraphicsItem, QColorDialog
 )
-from PyQt6.QtGui import QColor, QBrush, QPen, QPainter, QCursor, QAction, QPainterPath
-from PyQt6.QtCore import Qt, QPointF
-
-class EdgeItem(QGraphicsPathItem):
-    def __init__(self, start_node, end_node):
-        super().__init__()
-        self.start_node = start_node
-        self.end_node = end_node
-        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable, True)
-
-        # Edge in beiden Nodes registrieren
-        start_node.edges.append(self)
-        end_node.edges.append(self)
-
-        self.setZValue(-1)  # hinter Nodes zeichnen
-        self.setPen(QPen(Qt.GlobalColor.white, 12))
-
-        self.update_position()
-
-    def update_position(self):
-        """Wird von Nodes aufgerufen, wenn sich deren Position ändert."""
-        start = self.start_node.sceneBoundingRect().center()
-        end = self.end_node.sceneBoundingRect().center()
-
-        path = QPainterPath()
-        path.moveTo(start)
-        path.lineTo(end)
-
-        self.setPath(path)
-    
-    def contextMenuEvent(self, event):
-        menu = QMenu()
-
-        delete_action = menu.addAction("Löschen")
-
-        action = menu.exec(event.screenPos())
-
-        # Aktion 1: Löschen
-        if action == delete_action:
-            scene = self.scene()
-            scene.removeItem(self)
-            return
+from PyQt6.QtGui import QColor, QBrush, QPen, QPainterPath, QAction
+from PyQt6.QtCore import Qt
 
 class NodeRect(QGraphicsRectItem):
     """Ein einzelnes verschiebbares und beschriftbares Rechteck."""

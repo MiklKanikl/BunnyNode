@@ -1,15 +1,14 @@
-from PyQt6.QtWidgets import (
-    QApplication, QGraphicsScene, QGraphicsView,
-    QColorDialog, QMenu, QDialog, QFileDialog, QInputDialog
-)
-from PyQt6.QtGui import QColor, QPainter, QCursor, QAction
-from PyQt6.QtCore import Qt, QPoint, QTimer
-from utils.NodeItems import NodeRect, NodeEllipse, EdgeItem
-import sys, os
+from PyQt6.QtWidgets import QGraphicsScene, QColorDialog, QInputDialog, QDialog, QFileDialog
+from PyQt6.QtGui import QColor, QCursor
+from PyQt6.QtCore import Qt, QTimer
+from editor.items.node import NodeRect, NodeEllipse
+from editor.items.edge import EdgeItem
+import os
 
-class MainScene(QGraphicsScene):
+class DiagramScene(QGraphicsScene):
     def __init__(self):
         super().__init__()
+        self.setSceneRect(0, 0, 3000, 3000)
         self.current_color = QColor(0, 150, 255)  # Standardfarbe
 
     def keyPressEvent(self, event):
@@ -152,94 +151,3 @@ class MainScene(QGraphicsScene):
             end = id_map[e["end"]]
             edge = EdgeItem(start, end)
             self.addItem(edge)
-
-class GraphicsView(QGraphicsView):
-    def __init__(self, scene):
-        super().__init__(scene)
-        self.setRenderHints(QPainter.RenderHint.Antialiasing |
-                            QPainter.RenderHint.SmoothPixmapTransform)
-
-        self.zoom = 0
-        self.zoom_step = 0.1
-        self.zoom_range = [-5, 5]   # Min/Max Zoom
-
-        self.setDragMode(QGraphicsView.DragMode.NoDrag)
-        self._panning = False
-        self._pan_start = QPoint()
-
-    # ---------------------
-    #     Z O O M
-    # ---------------------
-    def wheelEvent(self, event):
-        angle = event.angleDelta().y()
-
-        if angle > 0 and self.zoom < self.zoom_range[1]:
-            zoom_factor = 1 + self.zoom_step
-            self.zoom += 1
-        elif angle < 0 and self.zoom > self.zoom_range[0]:
-            zoom_factor = 1 - self.zoom_step
-            self.zoom -= 1
-        else:
-            return
-
-        # Zoom auf Mausposition
-        old_pos = self.mapToScene(event.position().toPoint())
-        self.scale(zoom_factor, zoom_factor)
-        new_pos = self.mapToScene(event.position().toPoint())
-        delta = new_pos - old_pos
-
-        self.translate(delta.x(), delta.y())
-
-    # ---------------------
-    #      P A N
-    # ---------------------
-    def mousePressEvent(self, event):
-        if event.button() == Qt.MouseButton.MiddleButton:
-            self._panning = True
-            self._pan_start = event.pos()
-            self.setCursor(Qt.CursorShape.ClosedHandCursor)
-            event.accept()
-            return
-
-        if event.button() == Qt.MouseButton.RightButton:
-            # optional: RMB pan
-            self._panning = True
-            self._pan_start = event.pos()
-            self.setCursor(Qt.CursorShape.ClosedHandCursor)
-            event.accept()
-            return
-
-        super().mousePressEvent(event)
-
-    def mouseMoveEvent(self, event):
-        if self._panning:
-            delta = event.pos() - self._pan_start
-            self._pan_start = event.pos()
-            self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() - delta.x())
-            self.verticalScrollBar().setValue(self.verticalScrollBar().value() - delta.y())
-            event.accept()
-            return
-
-        super().mouseMoveEvent(event)
-
-    def mouseReleaseEvent(self, event):
-        if event.button() in (Qt.MouseButton.MiddleButton, Qt.MouseButton.RightButton):
-            self._panning = False
-            self.setCursor(Qt.CursorShape.ArrowCursor)
-            event.accept()
-            return
-
-        super().mouseReleaseEvent(event)
-
-app = QApplication(sys.argv)
-
-scene = MainScene()
-scene.setSceneRect(0, 0, 3000, 2400)
-
-view = GraphicsView(scene)
-view.showMaximized()
-view.setDragMode(QGraphicsView.DragMode.RubberBandDrag)
-view.setRenderHint(QPainter.RenderHint.Antialiasing)
-view.show()
-
-sys.exit(app.exec())
