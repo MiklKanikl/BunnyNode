@@ -6,6 +6,7 @@ class DiagramView(QGraphicsView):
     def __init__(self, scene):
         super().__init__(scene)
         self.showMaximized()
+        self.setWindowTitle("Diagram Editor")
         self.setRenderHints(QPainter.RenderHint.Antialiasing |
                             QPainter.RenderHint.SmoothPixmapTransform)
 
