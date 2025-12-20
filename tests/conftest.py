@@ -1,5 +1,6 @@
 import sys
 import pytest
+from pathlib import Path
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtGui import QColor
 from editor.core.scene import DiagramScene
@@ -36,3 +37,9 @@ def default_item_pack():
     n2 = NodeEllipse(350, 350, 80, 80, QColor(255, 0, 0))
     e1 = EdgeItem(n1, n2)
     return n1, n2, e1
+
+@pytest.fixture
+def save_dir(tmp_path):
+    save_dir = tmp_path / "saves"
+    save_dir.mkdir()
+    return save_dir

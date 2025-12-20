@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QGraphicsScene, QColorDialog, QInputDialog, QDialog, QFileDialog
-from PyQt6.QtGui import QColor, QCursor
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtGui import QColor, QCursor, QImage, QPainter
+from PyQt6.QtCore import Qt, QTimer, QRectF
 from editor.items.node import NodeRect, NodeEllipse
 from editor.items.edge import EdgeItem
 import os
@@ -8,9 +8,30 @@ import os
 class DiagramScene(QGraphicsScene):
     def __init__(self):
         super().__init__()
-        self.setSceneRect(0, 0, 3000, 3000)
+        self.setSceneRect(0, 0, 2000, 2000)
         self.current_color = QColor(0, 150, 255)  # Standardfarbe
+    
+    def export_png(self, path: str):
+        EXPORT_WIDTH = 2000
+        EXPORT_HEIGHT = 2000
 
+        image = QImage(
+            EXPORT_WIDTH,
+            EXPORT_HEIGHT,
+            QImage.Format.Format_ARGB32
+        )
+        image.fill(Qt.GlobalColor.black)
+        painter = QPainter(image)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        source_rect = QRectF(-100, -100, EXPORT_WIDTH, EXPORT_HEIGHT)
+        target_rect = QRectF(-100, -100, EXPORT_WIDTH, EXPORT_HEIGHT)
+
+        self.render(painter, target_rect, source_rect)
+
+        painter.end()
+
+        image.save(path)
+    
     def keyPressEvent(self, event):
         #R -> neues Rechteck an Mausposition
         if event.key() == Qt.Key.Key_R:
@@ -68,11 +89,9 @@ class DiagramScene(QGraphicsScene):
                 folder = "saves"
                 os.makedirs(folder, exist_ok=True)
                 filename = os.path.join(folder, new_text.strip() + ".diagram")
+            else:
+                return
             self.save_scene(filename)
-            popup = QDialog(None)
-            popup.setWindowTitle("Szene gespeichert")
-            QTimer.singleShot(100, popup.accept)
-            popup.exec()
             return
         # Ctrl+O -> Szene laden
         elif event.key() == Qt.Key.Key_O and event.modifiers() & Qt.KeyboardModifier.ControlModifier:

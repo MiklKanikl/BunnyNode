@@ -3,7 +3,7 @@ from PyQt6.QtWidgets import (
     QMenu, QGraphicsItem, QColorDialog
 )
 from PyQt6.QtGui import QColor, QBrush, QPen, QPainterPath, QAction
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QRectF
 
 class NodeRect(QGraphicsRectItem):
     """Ein einzelnes verschiebbares und beschriftbares Rechteck."""
@@ -11,6 +11,8 @@ class NodeRect(QGraphicsRectItem):
 
     def __init__(self, x, y, w, h, color):
         super().__init__(0, 0, w, h)
+        self.width = w
+        self.height = h
         self.id = NodeRect._id_counter
         NodeRect._id_counter += 1
         self.edges = []
@@ -33,6 +35,12 @@ class NodeRect(QGraphicsRectItem):
         self.label.setDefaultTextColor(QColor("white"))
         self.updateLabelPosition()
     
+    def boundingRect(self):
+        return QRectF(0, 0, self.width, self.height)
+
+    # def paint(self, painter, option, widget):
+    #     painter.drawRect(0, 0, self.width, self.height)
+
     def update_text(self, new_text):
         self.text = new_text
         self.label.setPlainText(new_text)
@@ -117,6 +125,8 @@ class NodeEllipse(QGraphicsEllipseItem):
 
     def __init__(self, x, y, w, h, color):
         super().__init__(0, 0, w, h)
+        self.width = w
+        self.height = h
         self.id = NodeEllipse._id_counter + NodeRect._id_counter
         NodeEllipse._id_counter += 1
         self.edges = []
@@ -138,6 +148,12 @@ class NodeEllipse(QGraphicsEllipseItem):
         self.text = ""
         self.label.setDefaultTextColor(QColor("white"))
         self.updateLabelPosition()
+    
+    def boundingRect(self):
+        return QRectF(0, 0, self.width, self.height)
+
+    # def paint(self, painter, option, widget):
+    #     painter.drawRect(0, 0, self.width, self.height)
     
     def update_text(self, new_text):
         self.text = new_text

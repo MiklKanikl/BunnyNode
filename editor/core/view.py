@@ -1,6 +1,7 @@
-from PyQt6.QtWidgets import QGraphicsView
+from PyQt6.QtWidgets import QGraphicsView, QFileDialog
 from PyQt6.QtCore import Qt, QPoint
 from PyQt6.QtGui import QPainter
+import os
 
 class DiagramView(QGraphicsView):
     def __init__(self, scene):
@@ -17,10 +18,23 @@ class DiagramView(QGraphicsView):
         self.setDragMode(QGraphicsView.DragMode.NoDrag)
         self._panning = False
         self._pan_start = QPoint()
+    
+    def export(self):
+        folder = "exports"
+        os.makedirs(folder, exist_ok=True)
+        path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Diagramm exportieren",
+            folder,
+            f"*.png"
+        )
 
-    # ---------------------
-    #     Z O O M
-    # ---------------------
+        if not path:
+            return
+        
+        self.scene().export_png(path)
+
+    #ZOOM
     def wheelEvent(self, event):
         angle = event.angleDelta().y()
 
@@ -41,9 +55,7 @@ class DiagramView(QGraphicsView):
 
         self.translate(delta.x(), delta.y())
 
-    # ---------------------
-    #      P A N
-    # ---------------------
+    #PAN
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.MiddleButton:
             self._panning = True
@@ -81,3 +93,8 @@ class DiagramView(QGraphicsView):
             return
 
         super().mouseReleaseEvent(event)
+    
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key.Key_P and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            self.export()
+        return super().keyPressEvent(event)
