@@ -41,7 +41,7 @@ class DiagramScene(QGraphicsScene):
 
             rect = NodeRect(
                 pos.x(), pos.y(),
-                140, 70,
+                80, 80,
                 self.current_color
             )
             self.addItem(rect)

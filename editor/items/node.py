@@ -1,33 +1,34 @@
 from PyQt6.QtWidgets import (
     QGraphicsRectItem, QGraphicsEllipseItem, QGraphicsTextItem, QInputDialog,
-    QMenu, QGraphicsItem, QColorDialog
+    QMenu, QGraphicsItem, QColorDialog, QDialog
 )
-from PyQt6.QtGui import QColor, QBrush, QPen, QPainterPath, QAction
-from PyQt6.QtCore import Qt, QRectF
+from PyQt6.QtGui import QColor, QBrush, QPen, QPainterPath, QAction, QPainter
+from PyQt6.QtCore import Qt, QRectF, QTimer
 
-class NodeRect(QGraphicsRectItem):
+class NodeRect(QGraphicsItem):
     """Ein einzelnes verschiebbares und beschriftbares Rechteck."""
     _id_counter = 1
 
     def __init__(self, x, y, w, h, color):
-        super().__init__(0, 0, w, h)
-        self.width = w
-        self.height = h
+        self.width = float(w)
+        self.height = float(h)
+        super().__init__()
         self.id = NodeRect._id_counter
         NodeRect._id_counter += 1
         self.edges = []
         self.setPos(x, y)
+        self.color = QColor(color)
         self.colour = [color.red(), color.green(), color.blue()]
 
         self.setFlags(
-            QGraphicsRectItem.GraphicsItemFlag.ItemIsMovable |
-            QGraphicsRectItem.GraphicsItemFlag.ItemIsSelectable |
-            QGraphicsRectItem.GraphicsItemFlag.ItemSendsGeometryChanges
+            QGraphicsItem.GraphicsItemFlag.ItemIsMovable |
+            QGraphicsItem.GraphicsItemFlag.ItemIsSelectable |
+            QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges
         )
 
         # Farbe + Rahmen
-        self.setBrush(QBrush(color))
-        self.setPen(QPen(QColor("black"), 2))
+        self.pen = QPen(QColor("black"), 2)
+        self.brush = QBrush(self.color)
 
         # Textobjekt in der Mitte
         self.label = QGraphicsTextItem("", self)
@@ -36,10 +37,13 @@ class NodeRect(QGraphicsRectItem):
         self.updateLabelPosition()
     
     def boundingRect(self):
-        return QRectF(0, 0, self.width, self.height)
-
-    # def paint(self, painter, option, widget):
-    #     painter.drawRect(0, 0, self.width, self.height)
+        return QRectF(0.0, 0.0, self.width, self.height)
+    
+    def paint(self, painter, option, widget=None):
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setPen(self.pen)
+        painter.setBrush(self.brush)
+        painter.drawRect(self.boundingRect())
 
     def update_text(self, new_text):
         self.text = new_text
@@ -55,10 +59,9 @@ class NodeRect(QGraphicsRectItem):
 
     def updateLabelPosition(self):
         """Text in die Mitte platzieren."""
-        rect = self.rect()
         text_rect = self.label.boundingRect()
-        x = (rect.width() - text_rect.width()) / 2
-        y = (rect.height() - text_rect.height()) / 2
+        x = (self.width - text_rect.width()) / 2
+        y = (self.height - text_rect.height()) / 2
         self.label.setPos(x, y)
 
     def mouseDoubleClickEvent(self, event):
@@ -70,20 +73,54 @@ class NodeRect(QGraphicsRectItem):
             self.updateLabelPosition()
         super().mouseDoubleClickEvent(event)
     
+    def apply_color(self, color: QColor):
+        self.color = QColor(color)
+        self.brush = QBrush(self.color)
+        self.colour = [self.color.red(), self.color.green(), self.color.blue()]
+        self.update()
+    
+    def open_color_dialog(self):
+        scene = self.scene()
+        if not scene:
+            return
+
+        views = scene.views()
+        if not views:
+            return
+
+        parent = views[0]
+
+        new_color = QColorDialog.getColor(
+            self.color,
+            parent,
+            "Farbe wählen"
+        )
+        
+        if not new_color.isValid():
+            return
+
+        self.apply_color(new_color)
+
+    def request_color_change(self):
+        QTimer.singleShot(0, self.open_color_dialog)
+    
     def contextMenuEvent(self, event):
         menu = QMenu()
 
         delete_action = QAction("Löschen", menu)
         rename_action = QAction("Umbenennen", menu)
         color_action  = QAction("Farbe ändern", menu)
+        size_action = QAction("Größe ändern", menu)
         edge_del_action = QAction("Kanten löschen", menu)
 
         menu.addAction(delete_action)
         menu.addAction(rename_action)
         menu.addAction(color_action)
         menu.addAction(edge_del_action)
+        menu.addAction(size_action)
 
         action = menu.exec(event.screenPos())
+        scene = self.scene()
 
         # Aktion 1: Löschen
         if action == delete_action:
@@ -105,28 +142,45 @@ class NodeRect(QGraphicsRectItem):
 
         # Aktion 3: Farbe ändern
         if action == color_action:
-            new_color = QColorDialog.getColor()
-            if new_color.isValid():
-                self.setBrush(new_color)
-                self.color = new_color
-                self.colour = [new_color.red(), new_color.green(), new_color.blue()]
+            #self.request_color_change()
+            self.open_color_dialog()
             return
         
         # Aktion 4: Kanten löschen
         if action == edge_del_action:
-            scene = self.scene()
             for edge in self.edges[:]:
                 scene.removeItem(edge)
             return
+        
+        # Aktion 5: Größe ändern
+        if action == size_action:
+            new_width, ok = QInputDialog.getText(
+                None, "Größe ändern", "Breite:"
+            )
+            new_height, ok = QInputDialog.getText(
+                None, "Größe ändern", "Höhe"
+            )
+            if ok and new_width and new_height:
+                try:
+                    self.prepareGeometryChange()
+                    self.width = float(new_width)
+                    self.height = float(new_height)
+                    self.update()
+                except:
+                    popup = QDialog(None)
+                    popup.setWindowTitle("Invalide Größen")
+                    popup.exec()
+            return
 
-class NodeEllipse(QGraphicsEllipseItem):
+class NodeEllipse(QGraphicsItem):
     """Ein einzelner verschiebbarer Kreis."""
     _id_counter = 1
 
     def __init__(self, x, y, w, h, color):
-        super().__init__(0, 0, w, h)
-        self.width = w
-        self.height = h
+        super().__init__()
+        self.width = float(w)
+        self.height = float(h)
+        self.color = QColor(color)
         self.id = NodeEllipse._id_counter + NodeRect._id_counter
         NodeEllipse._id_counter += 1
         self.edges = []
@@ -134,14 +188,14 @@ class NodeEllipse(QGraphicsEllipseItem):
         self.colour = [color.red(), color.green(), color.blue()]
 
         self.setFlags(
-            QGraphicsEllipseItem.GraphicsItemFlag.ItemIsMovable |
-            QGraphicsEllipseItem.GraphicsItemFlag.ItemIsSelectable |
-            QGraphicsEllipseItem.GraphicsItemFlag.ItemSendsGeometryChanges
+            QGraphicsItem.GraphicsItemFlag.ItemIsMovable |
+            QGraphicsItem.GraphicsItemFlag.ItemIsSelectable |
+            QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges
         )
 
         # Farbe + Rahmen
-        self.setBrush(QBrush(color))
-        self.setPen(QPen(QColor("black"), 2))
+        self.brush = QBrush(self.color)
+        self.pen = QPen(Qt.GlobalColor.black, 2)
 
         # Textobjekt in der Mitte
         self.label = QGraphicsTextItem("", self)
@@ -151,9 +205,11 @@ class NodeEllipse(QGraphicsEllipseItem):
     
     def boundingRect(self):
         return QRectF(0, 0, self.width, self.height)
-
-    # def paint(self, painter, option, widget):
-    #     painter.drawRect(0, 0, self.width, self.height)
+    
+    def paint(self, painter, option, widget=None):
+        painter.setBrush(self.brush)
+        painter.setPen(self.pen)
+        painter.drawEllipse(self.boundingRect())
     
     def update_text(self, new_text):
         self.text = new_text
@@ -169,10 +225,9 @@ class NodeEllipse(QGraphicsEllipseItem):
     
     def updateLabelPosition(self):
         """Text in die Mitte platzieren."""
-        ellp_rect = self.rect()
         text_rect = self.label.boundingRect()
-        x = (ellp_rect.width() - text_rect.width()) / 2
-        y = (ellp_rect.height() - text_rect.height()) / 2
+        x = (self.width - text_rect.width()) / 2
+        y = (self.height - text_rect.height()) / 2
         self.label.setPos(x, y)
     
     def mouseDoubleClickEvent(self, event):
@@ -184,6 +239,37 @@ class NodeEllipse(QGraphicsEllipseItem):
             self.updateLabelPosition()
         super().mouseDoubleClickEvent(event)
     
+    def apply_color(self, color: QColor):
+        self.color = QColor(color)
+        self.brush = QBrush(self.color)
+        self.colour = [self.color.red(), self.color.green(), self.color.blue()]
+        self.update()
+    
+    def open_color_dialog(self):
+        scene = self.scene()
+        if not scene:
+            return
+
+        views = scene.views()
+        if not views:
+            return
+
+        parent = views[0]
+
+        new_color = QColorDialog.getColor(
+            self.color,
+            parent,
+            "Farbe wählen"
+        )
+        
+        if not new_color.isValid():
+            return
+
+        self.apply_color(new_color)
+
+    def request_color_change(self):
+        QTimer.singleShot(0, self.open_color_dialog)
+    
     def contextMenuEvent(self, event):
         menu = QMenu()
 
@@ -191,11 +277,13 @@ class NodeEllipse(QGraphicsEllipseItem):
         rename_action = QAction("Umbenennen", menu)
         color_action  = QAction("Farbe ändern", menu)
         edge_del_action = QAction("Kanten löschen", menu)
+        size_action = QAction("Größe ändern", menu)
 
         menu.addAction(delete_action)
         menu.addAction(rename_action)
         menu.addAction(color_action)
         menu.addAction(edge_del_action)
+        menu.addAction(size_action)
 
         action = menu.exec(event.screenPos())
 
@@ -219,11 +307,7 @@ class NodeEllipse(QGraphicsEllipseItem):
 
         # Aktion 3: Farbe ändern
         if action == color_action:
-            new_color = QColorDialog.getColor()
-            if new_color.isValid():
-                self.setBrush(new_color)
-                self.color = new_color
-                self.colour = [new_color.red(), new_color.green(), new_color.blue()]
+            self.request_color_change()
             return
         
         # Aktion 4: Kanten löschen
@@ -231,4 +315,23 @@ class NodeEllipse(QGraphicsEllipseItem):
             scene = self.scene()
             for edge in self.edges[:]:
                 scene.removeItem(edge)
+            return
+        
+        if action == size_action:
+            new_width, ok = QInputDialog.getText(
+                None, "Größe ändern", "Breite:"
+            )
+            new_height, ok = QInputDialog.getText(
+                None, "Größe ändern", "Höhe"
+            )
+            if ok and new_width and new_height:
+                try:
+                    self.prepareGeometryChange()
+                    self.width = float(new_width)
+                    self.height = float(new_height)
+                    self.update()
+                except:
+                    popup = QDialog(None)
+                    popup.setWindowTitle("Invalide Größen")
+                    popup.exec()
             return
