@@ -6,7 +6,6 @@ import os
 class DiagramView(QGraphicsView):
     def __init__(self, scene):
         super().__init__(scene)
-        self.showMaximized()
         self.setWindowTitle("Diagram Editor")
         self.setRenderHints(QPainter.RenderHint.Antialiasing |
                             QPainter.RenderHint.SmoothPixmapTransform)
@@ -18,6 +17,18 @@ class DiagramView(QGraphicsView):
         self.setDragMode(QGraphicsView.DragMode.NoDrag)
         self._panning = False
         self._pan_start = QPoint()
+    
+    def create_rect(self):
+        self.scene().add_rect(0, 0)
+    
+    def create_ellipse(self):
+        self.scene().add_ellipse(0, 0)
+    
+    def save_diagram(self):
+        self.scene().save_file_dialog()
+    
+    def load_a_diagram(self):
+        self.scene().load_file_dialog()
     
     def export(self):
         folder = "exports"

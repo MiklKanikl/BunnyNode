@@ -23,14 +23,55 @@ class DiagramScene(QGraphicsScene):
         image.fill(Qt.GlobalColor.black)
         painter = QPainter(image)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        source_rect = QRectF(-100, -100, EXPORT_WIDTH, EXPORT_HEIGHT)
-        target_rect = QRectF(-100, -100, EXPORT_WIDTH, EXPORT_HEIGHT)
+        source_rect = QRectF(0, 0, EXPORT_WIDTH, EXPORT_HEIGHT)
+        target_rect = QRectF(0, 0, EXPORT_WIDTH, EXPORT_HEIGHT)
 
         self.render(painter, target_rect, source_rect)
 
         painter.end()
 
         image.save(path)
+    
+    def add_rect(self, x, y):
+        rect = NodeRect(
+            x, y,
+            80, 80,
+            self.current_color
+        )
+        self.addItem(rect)
+    
+    def add_ellipse(self, x, y):
+        ellp = NodeEllipse(
+            x, y,
+            80, 80,
+            self.current_color
+        )
+        self.addItem(ellp)
+    
+    def save_file_dialog(self):
+        new_text, ok = QInputDialog.getText(
+            None, "Speichern unter", "Dateiname (ohne Endung):", text="diagram"
+        )
+        if ok and new_text.strip():
+            folder = "saves"
+            os.makedirs(folder, exist_ok=True)
+            filename = os.path.join(folder, new_text.strip() + ".diagram")
+        else:
+            return
+        self.save_scene(filename)
+    
+    def load_file_dialog(self):
+        folder = "saves"
+        os.makedirs(folder, exist_ok=True)
+
+        filename, _ = QFileDialog.getOpenFileName(
+            None,
+            "Laden",
+            folder,                      
+            "Diagramm-Dateien (*.diagram *.json)"
+        )
+        if filename:
+            self.load_scene(filename)
     
     def keyPressEvent(self, event):
         #R -> neues Rechteck an Mausposition
@@ -39,24 +80,14 @@ class DiagramScene(QGraphicsScene):
             mouse_pos = view.mapFromGlobal(QCursor.pos())
             pos = view.mapToScene(mouse_pos)
 
-            rect = NodeRect(
-                pos.x(), pos.y(),
-                80, 80,
-                self.current_color
-            )
-            self.addItem(rect)
+            self.add_rect(pos.x(), pos.y())
         #E -> neuer Kreis an Mausposition
         elif event.key() == Qt.Key.Key_E:
             view = self.views()[0]
             mouse_pos = view.mapFromGlobal(QCursor.pos())
             pos = view.mapToScene(mouse_pos)
 
-            ellipse = NodeEllipse(
-                pos.x(), pos.y(),
-                80, 80,
-                self.current_color
-            )
-            self.addItem(ellipse)
+            self.add_ellipse(pos.x(), pos.y())
         #C -> Farbe ändern
         elif event.key() == Qt.Key.Key_C:
             chosen = QColorDialog.getColor(self.current_color)
@@ -82,30 +113,11 @@ class DiagramScene(QGraphicsScene):
             return
         # Ctrl+S -> Szene speichern
         elif event.key() == Qt.Key.Key_S and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-            new_text, ok = QInputDialog.getText(
-                None, "Speichern unter", "Dateiname (ohne Endung):", text="diagram"
-            )
-            if ok and new_text.strip():
-                folder = "saves"
-                os.makedirs(folder, exist_ok=True)
-                filename = os.path.join(folder, new_text.strip() + ".diagram")
-            else:
-                return
-            self.save_scene(filename)
+            self.save_file_dialog()
             return
         # Ctrl+O -> Szene laden
         elif event.key() == Qt.Key.Key_O and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-            folder = "saves"
-            os.makedirs(folder, exist_ok=True)
-
-            filename, _ = QFileDialog.getOpenFileName(
-                None,
-                "Laden",
-                folder,                      
-                "Diagramm-Dateien (*.diagram *.json)"
-            )
-            if filename:
-                self.load_scene(filename)
+            self.load_file_dialog()
             return
         super().keyPressEvent(event)
     
@@ -121,8 +133,8 @@ class DiagramScene(QGraphicsScene):
                     "type": "rect" if isinstance(item, NodeRect) else "ellipse",
                     "x": item.scenePos().x(),
                     "y": item.scenePos().y(),
-                    "width": item.rect().width(),
-                    "height": item.rect().height(),
+                    "width": item.width,
+                    "height": item.height,
                     "color": item.colour,
                     "text": item.text
                 }

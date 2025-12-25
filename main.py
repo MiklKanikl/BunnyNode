@@ -1,6 +1,7 @@
 from PyQt6.QtWidgets import QApplication, QGraphicsView
 from editor.core.scene import DiagramScene
 from editor.core.view import DiagramView
+from editor.core.window import EditorWindow
 
 import sys
 
@@ -11,7 +12,9 @@ def main():
 
     view = DiagramView(scene)
     view.setDragMode(QGraphicsView.DragMode.RubberBandDrag)
-    view.show()
+    
+    win = EditorWindow(view)
+    win.showMaximized()
 
     sys.exit(app.exec())
 
