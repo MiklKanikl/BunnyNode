@@ -41,7 +41,10 @@ class NodeRect(QGraphicsItem):
     
     def paint(self, painter, option, widget=None):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        painter.setPen(self.pen)
+        if self.isSelected():
+            painter.setPen(QPen(QColor("#3fa9f5"), 3))
+        else:
+            painter.setPen(self.pen)
         painter.setBrush(self.brush)
         painter.drawRect(self.boundingRect())
 
@@ -112,19 +115,22 @@ class NodeRect(QGraphicsItem):
         color_action  = QAction("Farbe ändern", menu)
         size_action = QAction("Größe ändern", menu)
         edge_del_action = QAction("Kanten löschen", menu)
+        startnode_action = QAction("Startnode wählen", menu)
+        endnode_action = QAction("Endnode wählen", menu)
 
         menu.addAction(delete_action)
         menu.addAction(rename_action)
         menu.addAction(color_action)
         menu.addAction(edge_del_action)
         menu.addAction(size_action)
+        menu.addAction(startnode_action)
+        menu.addAction(endnode_action)
 
         action = menu.exec(event.screenPos())
         scene = self.scene()
 
         # Aktion 1: Löschen
         if action == delete_action:
-            scene = self.scene()
             for edge in self.edges[:]:
                 scene.removeItem(edge)
             scene.removeItem(self)
@@ -171,6 +177,16 @@ class NodeRect(QGraphicsItem):
                     popup.setWindowTitle("Invalide Größen")
                     popup.exec()
             return
+        
+        # Aktion 6: Node als Startnode für Distanzrechnung wählen
+        if action == startnode_action:
+            scene.startnode = self
+            return
+
+        # Aktion 7: Node als Endnode für Distanzrechnung wählen
+        if action == endnode_action:
+            scene.endnode = self
+            return
 
 class NodeEllipse(QGraphicsItem):
     """Ein einzelner verschiebbarer Kreis."""
@@ -207,8 +223,11 @@ class NodeEllipse(QGraphicsItem):
         return QRectF(0, 0, self.width, self.height)
     
     def paint(self, painter, option, widget=None):
+        if self.isSelected():
+            painter.setPen(QPen(QColor("#3fa9f5"), 3))
+        else:
+            painter.setPen(self.pen)
         painter.setBrush(self.brush)
-        painter.setPen(self.pen)
         painter.drawEllipse(self.boundingRect())
     
     def update_text(self, new_text):
@@ -278,18 +297,22 @@ class NodeEllipse(QGraphicsItem):
         color_action  = QAction("Farbe ändern", menu)
         edge_del_action = QAction("Kanten löschen", menu)
         size_action = QAction("Größe ändern", menu)
+        startnode_action = QAction("Startnode wählen", menu)
+        endnode_action = QAction("Endnode wählen", menu)
 
         menu.addAction(delete_action)
         menu.addAction(rename_action)
         menu.addAction(color_action)
         menu.addAction(edge_del_action)
         menu.addAction(size_action)
+        menu.addAction(startnode_action)
+        menu.addAction(endnode_action)
 
         action = menu.exec(event.screenPos())
+        scene = self.scene()
 
         # Aktion 1: Löschen
         if action == delete_action:
-            scene = self.scene()
             for edge in self.edges[:]:
                 scene.removeItem(edge)
             scene.removeItem(self)
@@ -312,11 +335,11 @@ class NodeEllipse(QGraphicsItem):
         
         # Aktion 4: Kanten löschen
         if action == edge_del_action:
-            scene = self.scene()
             for edge in self.edges[:]:
                 scene.removeItem(edge)
             return
         
+        # Aktion 5: Größe ändern
         if action == size_action:
             new_width, ok = QInputDialog.getText(
                 None, "Größe ändern", "Breite:"
@@ -334,4 +357,14 @@ class NodeEllipse(QGraphicsItem):
                     popup = QDialog(None)
                     popup.setWindowTitle("Invalide Größen")
                     popup.exec()
+            return
+        
+        # Aktion 6: Node als Startnode für Distanzrechnung wählen
+        if action == startnode_action:
+            scene.startnode = self
+            return
+
+        # Aktion 7: Node als Endnode für Distanzrechnung wählen
+        if action == endnode_action:
+            scene.endnode = self
             return

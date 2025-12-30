@@ -29,6 +29,11 @@ class EdgeItem(QGraphicsPathItem):
 
         self.setPath(path)
     
+    def laenge(self):
+        start = self.start_node.sceneBoundingRect().center()
+        end = self.end_node.sceneBoundingRect().center()
+        return ((start.x() - end.x()) ** 2 + (start.y() - end.y()) ** 2) ** 0.5
+    
     def contextMenuEvent(self, event):
         menu = QMenu()
 

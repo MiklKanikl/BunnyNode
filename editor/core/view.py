@@ -44,6 +44,9 @@ class DiagramView(QGraphicsView):
             return
         
         self.scene().export_png(path)
+    
+    def compute_distance(self):
+        self.scene().setup_path_compution()
 
     #ZOOM
     def wheelEvent(self, event):
@@ -76,7 +79,6 @@ class DiagramView(QGraphicsView):
             return
 
         if event.button() == Qt.MouseButton.RightButton:
-            # optional: RMB pan
             self._panning = True
             self._pan_start = event.pos()
             self.setCursor(Qt.CursorShape.ClosedHandCursor)

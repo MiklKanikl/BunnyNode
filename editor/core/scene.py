@@ -1,8 +1,9 @@
 from PyQt6.QtWidgets import QGraphicsScene, QColorDialog, QInputDialog, QDialog, QFileDialog
 from PyQt6.QtGui import QColor, QCursor, QImage, QPainter
-from PyQt6.QtCore import Qt, QTimer, QRectF
+from PyQt6.QtCore import Qt, QRectF, QTimer
 from editor.items.node import NodeRect, NodeEllipse
 from editor.items.edge import EdgeItem
+from editor.calculations.dijkstra import shortest_path
 import os
 
 class DiagramScene(QGraphicsScene):
@@ -10,6 +11,8 @@ class DiagramScene(QGraphicsScene):
         super().__init__()
         self.setSceneRect(0, 0, 2000, 2000)
         self.current_color = QColor(0, 150, 255)  # Standardfarbe
+        self.startnode = None
+        self.endnode = None
     
     def export_png(self, path: str):
         EXPORT_WIDTH = 2000
@@ -182,3 +185,34 @@ class DiagramScene(QGraphicsScene):
             end = id_map[e["end"]]
             edge = EdgeItem(start, end)
             self.addItem(edge)
+    
+    def weighted_graph(self):
+        g = {}
+        for i in self.items():
+            if isinstance(i, NodeRect) or isinstance(i, NodeEllipse):
+                g[i] = []
+            elif isinstance(i, EdgeItem):
+                dist = i.laenge()      # euklidische Länge
+                g[i.start_node].append((i.end_node, dist))
+                g[i.end_node].append((i.start_node, dist))
+        return g
+    
+    def show_distance(self, text):
+        for v in self.views():
+            win = v.window()
+            if hasattr(win, "status"):
+                win.status.setText(text)
+    
+    def compute_shortest(self, a, b):
+        g = self.weighted_graph()
+        d, prev = shortest_path(g, a, b)
+        if d is None:
+            self.show_distance("Kein Pfad")
+        else:
+            self.show_distance(f"Distanz: {round(d,2)}")
+    
+    def setup_path_compution(self):
+        if self.startnode and self.endnode:
+            self.compute_shortest(self.startnode, self.endnode)
+        else:
+            self.show_distance("Keine Nodes ausgewählt")

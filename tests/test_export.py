@@ -4,6 +4,5 @@ def test_png_export(scene, default_item_pack, save_dir):
     path = save_dir / "export.png"
 
     scene.export_png(path)
-    print(path)
     assert path.exists()
     assert path.stat().st_size > 0
