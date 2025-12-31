@@ -7,13 +7,13 @@ from PyQt6.QtCore import Qt, QRectF, QTimer
 
 class NodeRect(QGraphicsItem):
     """Ein einzelnes verschiebbares und beschriftbares Rechteck."""
-    _id_counter = 1
+    _id_counter = 0
 
     def __init__(self, x, y, w, h, color):
         self.width = float(w)
         self.height = float(h)
         super().__init__()
-        self.id = NodeRect._id_counter
+        self.id = NodeRect._id_counter + NodeEllipse._id_counter
         NodeRect._id_counter += 1
         self.edges = []
         self.setPos(x, y)
@@ -190,7 +190,7 @@ class NodeRect(QGraphicsItem):
 
 class NodeEllipse(QGraphicsItem):
     """Ein einzelner verschiebbarer Kreis."""
-    _id_counter = 1
+    _id_counter = 0
 
     def __init__(self, x, y, w, h, color):
         super().__init__()

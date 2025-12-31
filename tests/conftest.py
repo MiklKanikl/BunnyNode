@@ -43,3 +43,9 @@ def save_dir(tmp_path):
     save_dir = tmp_path / "saves"
     save_dir.mkdir()
     return save_dir
+
+@pytest.fixture
+def export_dir(tmp_path):
+    export_dir = tmp_path / "exports"
+    export_dir.mkdir()
+    return export_dir
