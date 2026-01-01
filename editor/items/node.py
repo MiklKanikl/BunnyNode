@@ -1,12 +1,12 @@
 from PyQt6.QtWidgets import (
-    QGraphicsRectItem, QGraphicsEllipseItem, QGraphicsTextItem, QInputDialog,
+    QGraphicsTextItem, QInputDialog,
     QMenu, QGraphicsItem, QColorDialog, QDialog
 )
-from PyQt6.QtGui import QColor, QBrush, QPen, QPainterPath, QAction, QPainter
+from PyQt6.QtGui import QColor, QBrush, QPen, QAction, QPainter
 from PyQt6.QtCore import Qt, QRectF, QTimer
 
 class NodeRect(QGraphicsItem):
-    """Ein einzelnes verschiebbares und beschriftbares Rechteck."""
+    """Ein einzelner verschiebbarer und beschriftbarer Rechtecksknoten."""
     _id_counter = 0
 
     def __init__(self, x, y, w, h, color):
@@ -55,7 +55,6 @@ class NodeRect(QGraphicsItem):
     
     def itemChange(self, change, value):
         if change == QGraphicsItem.GraphicsItemChange.ItemPositionHasChanged:
-            # Edges informieren, dass sie sich neu zeichnen müssen
             for edge in self.edges:
                 edge.update_position()
         return super().itemChange(change, value)
@@ -76,6 +75,7 @@ class NodeRect(QGraphicsItem):
             self.updateLabelPosition()
         super().mouseDoubleClickEvent(event)
     
+    # Farbänderungslogik
     def apply_color(self, color: QColor):
         self.color = QColor(color)
         self.brush = QBrush(self.color)
@@ -189,7 +189,7 @@ class NodeRect(QGraphicsItem):
             return
 
 class NodeEllipse(QGraphicsItem):
-    """Ein einzelner verschiebbarer Kreis."""
+    """Ein einzelner verschiebbarer Kreisknoten."""
     _id_counter = 0
 
     def __init__(self, x, y, w, h, color):
@@ -237,7 +237,6 @@ class NodeEllipse(QGraphicsItem):
     
     def itemChange(self, change, value):
         if change == QGraphicsItem.GraphicsItemChange.ItemPositionHasChanged:
-            # Edges informieren, dass sie sich neu zeichnen müssen
             for edge in self.edges:
                 edge.update_position()
         return super().itemChange(change, value)
@@ -258,6 +257,7 @@ class NodeEllipse(QGraphicsItem):
             self.updateLabelPosition()
         super().mouseDoubleClickEvent(event)
     
+    # Farbänderungslogik
     def apply_color(self, color: QColor):
         self.color = QColor(color)
         self.brush = QBrush(self.color)

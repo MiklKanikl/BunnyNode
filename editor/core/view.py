@@ -18,6 +18,7 @@ class DiagramView(QGraphicsView):
         self._panning = False
         self._pan_start = QPoint()
     
+    # Funktionen um Window mit Szene zu verbinden
     def create_rect(self):
         self.scene().add_rect(0, 0)
     
@@ -48,7 +49,7 @@ class DiagramView(QGraphicsView):
     def compute_distance(self):
         self.scene().setup_path_compution()
 
-    #ZOOM
+    # ZOOM
     def wheelEvent(self, event):
         angle = event.angleDelta().y()
 
@@ -69,7 +70,7 @@ class DiagramView(QGraphicsView):
 
         self.translate(delta.x(), delta.y())
 
-    #PAN
+    # PAN
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.MiddleButton:
             self._panning = True

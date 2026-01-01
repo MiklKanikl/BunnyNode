@@ -124,13 +124,13 @@ class DiagramScene(QGraphicsScene):
             return
         super().keyPressEvent(event)
     
-    def save_scene(self, filename):
+    def save_scene(self, filename): # Szene speichern
         data = {
             "nodes": [],
             "edges": []
         }
         for item in self.items():
-            if isinstance(item, NodeRect) or isinstance(item, NodeEllipse):
+            if isinstance(item, NodeRect) or isinstance(item, NodeEllipse): # Nodes
                 node = {
                     "id": item.id,
                     "type": "rect" if isinstance(item, NodeRect) else "ellipse",
@@ -143,7 +143,7 @@ class DiagramScene(QGraphicsScene):
                 }
                 data["nodes"].append(node)
 
-            elif isinstance(item, EdgeItem):
+            elif isinstance(item, EdgeItem): # Edges
                 data["edges"].append({
                     "start": item.start_node.id,
                     "end": item.end_node.id
@@ -152,7 +152,7 @@ class DiagramScene(QGraphicsScene):
         with open(filename, "w") as f:
             json.dump(data, f, indent=4)
     
-    def load_scene(self, filename):
+    def load_scene(self, filename): # Datei laden
         import json
         with open(filename, "r") as f:
             data = json.load(f)
@@ -160,7 +160,7 @@ class DiagramScene(QGraphicsScene):
         self.clear()
         id_map = {}
 
-        # nodes
+        # Nodes
         for n in data["nodes"]:
             if n["type"] == "rect":
                 node = NodeRect(
@@ -179,20 +179,20 @@ class DiagramScene(QGraphicsScene):
             id_map[node.id] = node
             self.addItem(node)
 
-        # edges
+        # Edges
         for e in data["edges"]:
             start = id_map[e["start"]]
             end = id_map[e["end"]]
             edge = EdgeItem(start, end)
             self.addItem(edge)
     
-    def weighted_graph(self):
+    def weighted_graph(self): # Graph mit Kantenlängen (gewichtet)
         g = {}
         for i in self.items():
             if isinstance(i, NodeRect) or isinstance(i, NodeEllipse):
                 g[i] = []
             elif isinstance(i, EdgeItem):
-                dist = i.laenge()      # euklidische Länge
+                dist = i.laenge()
                 g[i.start_node].append((i.end_node, dist))
                 g[i.end_node].append((i.start_node, dist))
         return g

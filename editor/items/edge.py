@@ -19,7 +19,6 @@ class EdgeItem(QGraphicsPathItem):
         self.update_position()
 
     def update_position(self):
-        """Wird von Nodes aufgerufen, wenn sich deren Position ändert."""
         start = self.start_node.sceneBoundingRect().center()
         end = self.end_node.sceneBoundingRect().center()
 
@@ -29,7 +28,7 @@ class EdgeItem(QGraphicsPathItem):
 
         self.setPath(path)
     
-    def laenge(self):
+    def laenge(self): # Länge des Edges zurückgeben
         start = self.start_node.sceneBoundingRect().center()
         end = self.end_node.sceneBoundingRect().center()
         return ((start.x() - end.x()) ** 2 + (start.y() - end.y()) ** 2) ** 0.5
