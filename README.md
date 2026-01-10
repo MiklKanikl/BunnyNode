@@ -23,3 +23,17 @@ pip install -r requirements.txt
 
 ## Run
 python main.py
+
+## Usage
+
+### Nodes and Edges
+
+You can create ellipse nodes with E and rectangle nodes with R or via the toolbar. You can move them around or change their propreties via the contextmenu by rightclicking them. Select two nodes and then click L to create an edge between them.
+
+### File manipulation
+
+You can save your graph with ctrl+s, load an existing one with ctrl+o or alternatively do these actions via the toolbar. You also can export your graph as a PNG picture via the toolbar.
+
+### Other
+
+With DEL you can delete multiple Nodes at a time, which you have selected
