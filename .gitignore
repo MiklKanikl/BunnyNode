@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+.pytest_cache/
+.coverage
+
+exports/
+*.png
+
+saves/
+*.json
