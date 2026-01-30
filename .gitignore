@@ -11,3 +11,5 @@ exports/
 
 saves/
 *.json
+
+.DS_store
