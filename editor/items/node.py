@@ -60,14 +60,12 @@ class NodeRect(QGraphicsItem):
         return super().itemChange(change, value)
 
     def updateLabelPosition(self):
-        """Text in die Mitte platzieren."""
         text_rect = self.label.boundingRect()
         x = (self.width - text_rect.width()) / 2
         y = (self.height - text_rect.height()) / 2
         self.label.setPos(x, y)
 
     def mouseDoubleClickEvent(self, event):
-        """Doppelklick → Beschriftung ändern."""
         new_text, ok = QInputDialog.getText(None, "Beschriftung eingeben", "Text:")
         if ok and new_text.strip():
             self.label.setPlainText(new_text)
@@ -160,22 +158,17 @@ class NodeRect(QGraphicsItem):
         
         # Aktion 5: Größe ändern
         if action == size_action:
-            new_width, ok = QInputDialog.getText(
+            new_width, ok = QInputDialog.getDouble(
                 None, "Größe ändern", "Breite:"
             )
-            new_height, ok = QInputDialog.getText(
+            new_height, ok = QInputDialog.getDouble(
                 None, "Größe ändern", "Höhe"
             )
             if ok and new_width and new_height:
-                try:
-                    self.prepareGeometryChange()
-                    self.width = float(new_width)
-                    self.height = float(new_height)
-                    self.update()
-                except:
-                    popup = QDialog(None)
-                    popup.setWindowTitle("Invalide Größen")
-                    popup.exec()
+                self.prepareGeometryChange()
+                self.width = float(new_width)
+                self.height = float(new_height)
+                self.update()
             return
         
         # Aktion 6: Node als Startnode für Distanzrechnung wählen
@@ -242,14 +235,12 @@ class NodeEllipse(QGraphicsItem):
         return super().itemChange(change, value)
     
     def updateLabelPosition(self):
-        """Text in die Mitte platzieren."""
         text_rect = self.label.boundingRect()
         x = (self.width - text_rect.width()) / 2
         y = (self.height - text_rect.height()) / 2
         self.label.setPos(x, y)
     
     def mouseDoubleClickEvent(self, event):
-        """Doppelklick → Beschriftung ändern."""
         new_text, ok = QInputDialog.getText(None, "Beschriftung eingeben", "Text:")
         if ok and new_text.strip():
             self.label.setPlainText(new_text)
@@ -341,22 +332,17 @@ class NodeEllipse(QGraphicsItem):
         
         # Aktion 5: Größe ändern
         if action == size_action:
-            new_width, ok = QInputDialog.getText(
+            new_width, ok = QInputDialog.getDouble(
                 None, "Größe ändern", "Breite:"
             )
-            new_height, ok = QInputDialog.getText(
+            new_height, ok = QInputDialog.getDouble(
                 None, "Größe ändern", "Höhe"
             )
             if ok and new_width and new_height:
-                try:
-                    self.prepareGeometryChange()
-                    self.width = float(new_width)
-                    self.height = float(new_height)
-                    self.update()
-                except:
-                    popup = QDialog(None)
-                    popup.setWindowTitle("Invalide Größen")
-                    popup.exec()
+                self.prepareGeometryChange()
+                self.width = float(new_width)
+                self.height = float(new_height)
+                self.update()
             return
         
         # Aktion 6: Node als Startnode für Distanzrechnung wählen

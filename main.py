@@ -5,7 +5,7 @@ from editor.core.window import EditorWindow
 
 import sys
 
-def main(): # Startlogik
+def main():
     app = QApplication(sys.argv)
 
     scene = DiagramScene()

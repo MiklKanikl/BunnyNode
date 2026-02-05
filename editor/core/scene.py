@@ -9,14 +9,14 @@ import os
 class DiagramScene(QGraphicsScene):
     def __init__(self):
         super().__init__()
-        self.setSceneRect(0, 0, 2000, 2000)
+        self.setSceneRect(0, 0, 3000, 3000)
         self.current_color = QColor(0, 150, 255)  # Standardfarbe
         self.startnode = None
         self.endnode = None
     
     def export_png(self, path: str):
-        EXPORT_WIDTH = 2000
-        EXPORT_HEIGHT = 2000
+        EXPORT_WIDTH = 3000
+        EXPORT_HEIGHT = 3000
 
         image = QImage(
             EXPORT_WIDTH,
@@ -146,7 +146,9 @@ class DiagramScene(QGraphicsScene):
             elif isinstance(item, EdgeItem): # Edges
                 data["edges"].append({
                     "start": item.start_node.id,
-                    "end": item.end_node.id
+                    "end": item.end_node.id,
+                    "color": item.colour,
+                    "width": item.p_width
                 })
         import json
         with open(filename, "w") as f:
@@ -183,7 +185,9 @@ class DiagramScene(QGraphicsScene):
         for e in data["edges"]:
             start = id_map[e["start"]]
             end = id_map[e["end"]]
-            edge = EdgeItem(start, end)
+            color = QColor(e["color"][0], e["color"][1], e["color"][2])
+            width = e["width"]
+            edge = EdgeItem(start, end, color, width)
             self.addItem(edge)
     
     def weighted_graph(self): # Graph mit Kantenlängen (gewichtet)
