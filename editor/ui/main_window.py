@@ -2,6 +2,7 @@ from PyQt6.QtWidgets import QMainWindow, QToolBar, QStatusBar, QLabel
 from PyQt6.QtCore import QSize
 from PyQt6.QtGui import QAction, QIcon
 from editor.resources import icon
+from editor.controller.app_controller import AppController
 
 class EditorWindow(QMainWindow):
     def __init__(self, view):
@@ -10,6 +11,20 @@ class EditorWindow(QMainWindow):
         self.setWindowIcon(QIcon(icon("window.png")))
         self.setCentralWidget(view)
         self.build_toolbar()
+        self.controller = AppController()
+        undo_action = self.controller.undostack.createUndoAction(
+            self, "Undo"
+        )
+        redo_action = self.controller.undostack.createRedoAction(
+            self, "Redo"
+        )
+        undo_action.setIcon(QIcon(icon("undo.png")))
+        redo_action.setIcon(QIcon(icon("redo.png")))
+        undo_action.setShortcut("Ctrl+Z")
+        redo_action.setShortcut("Ctrl+Y")
+        toolbar = self.addToolBar("Edit")
+        toolbar.addAction(undo_action)
+        toolbar.addAction(redo_action)
     
     def build_toolbar(self):
         tb = QToolBar("Werkzeuge", self)

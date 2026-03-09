@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import (
     QGraphicsTextItem, QInputDialog,
-    QMenu, QGraphicsItem, QColorDialog, QDialog
+    QMenu, QGraphicsItem, QColorDialog
 )
 from PyQt6.QtGui import QColor, QBrush, QPen, QAction, QPainter
 from PyQt6.QtCore import Qt, QRectF, QTimer
@@ -49,8 +49,8 @@ class NodeRect(QGraphicsItem):
         painter.drawRect(self.boundingRect())
 
     def update_text(self, new_text):
+        self.scene().controller.rename_node(self, self.text, new_text)
         self.text = new_text
-        self.label.setPlainText(new_text)
         self.updateLabelPosition()
     
     def itemChange(self, change, value):
@@ -68,9 +68,7 @@ class NodeRect(QGraphicsItem):
     def mouseDoubleClickEvent(self, event):
         new_text, ok = QInputDialog.getText(None, "Beschriftung eingeben", "Text:")
         if ok and new_text.strip():
-            self.label.setPlainText(new_text)
-            self.text = new_text
-            self.updateLabelPosition()
+            self.update_text(new_text)
         super().mouseDoubleClickEvent(event)
     
     # Farbänderungslogik
@@ -100,10 +98,16 @@ class NodeRect(QGraphicsItem):
         if not new_color.isValid():
             return
 
-        self.apply_color(new_color)
+        self.scene().controller.change_color(self, self.color, new_color)
 
     def request_color_change(self):
         QTimer.singleShot(0, self.open_color_dialog)
+    
+    def resize(self, h, w):
+        self.prepareGeometryChange()
+        self.width = float(w)
+        self.height = float(h)
+        self.update()
     
     def contextMenuEvent(self, event):
         menu = QMenu()
@@ -129,9 +133,11 @@ class NodeRect(QGraphicsItem):
 
         # Aktion 1: Löschen
         if action == delete_action:
+            itemlist = []
             for edge in self.edges[:]:
-                scene.removeItem(edge)
-            scene.removeItem(self)
+                itemlist.append(edge)
+            itemlist.append(self)
+            scene.controller.delete_node(scene, itemlist)
             return
 
         # Aktion 2: Umbenennen
@@ -140,20 +146,20 @@ class NodeRect(QGraphicsItem):
                 None, "Umbenennen", "Neuer Name:"
             )
             if ok and new_text.strip():
-                self.label.setPlainText(new_text)
-                self.updateLabelPosition()
+                self.update_text(new_text)
             return
 
         # Aktion 3: Farbe ändern
         if action == color_action:
-            #self.request_color_change()
             self.open_color_dialog()
             return
         
         # Aktion 4: Kanten löschen
         if action == edge_del_action:
+            itemlist = []
             for edge in self.edges[:]:
-                scene.removeItem(edge)
+                itemlist.append(edge)
+            scene.controller.delete_node(scene, itemlist)
             return
         
         # Aktion 5: Größe ändern
@@ -165,10 +171,7 @@ class NodeRect(QGraphicsItem):
                 None, "Größe ändern", "Höhe"
             )
             if ok and new_width and new_height:
-                self.prepareGeometryChange()
-                self.width = float(new_width)
-                self.height = float(new_height)
-                self.update()
+                scene.controller.resize_node(self, self.width, self.height, new_width, new_height)
             return
         
         # Aktion 6: Node als Startnode für Distanzrechnung wählen
@@ -224,8 +227,8 @@ class NodeEllipse(QGraphicsItem):
         painter.drawEllipse(self.boundingRect())
     
     def update_text(self, new_text):
+        self.scene().controller.rename_node(self, self.text, new_text)
         self.text = new_text
-        self.label.setPlainText(new_text)
         self.updateLabelPosition()
     
     def itemChange(self, change, value):
@@ -243,9 +246,7 @@ class NodeEllipse(QGraphicsItem):
     def mouseDoubleClickEvent(self, event):
         new_text, ok = QInputDialog.getText(None, "Beschriftung eingeben", "Text:")
         if ok and new_text.strip():
-            self.label.setPlainText(new_text)
-            self.text = new_text
-            self.updateLabelPosition()
+            self.update_text(new_text)
         super().mouseDoubleClickEvent(event)
     
     # Farbänderungslogik
@@ -275,10 +276,16 @@ class NodeEllipse(QGraphicsItem):
         if not new_color.isValid():
             return
 
-        self.apply_color(new_color)
+        self.scene().controller.change_color(self, self.color, new_color)
 
     def request_color_change(self):
         QTimer.singleShot(0, self.open_color_dialog)
+    
+    def resize(self, h, w):
+        self.prepareGeometryChange()
+        self.width = float(w)
+        self.height = float(h)
+        self.update()
     
     def contextMenuEvent(self, event):
         menu = QMenu()
@@ -304,9 +311,11 @@ class NodeEllipse(QGraphicsItem):
 
         # Aktion 1: Löschen
         if action == delete_action:
+            itemlist = []
             for edge in self.edges[:]:
-                scene.removeItem(edge)
-            scene.removeItem(self)
+                itemlist.append(edge)
+            itemlist.append(self)
+            scene.controller.delete_node(scene, itemlist)
             return
 
         # Aktion 2: Umbenennen
@@ -315,8 +324,7 @@ class NodeEllipse(QGraphicsItem):
                 None, "Umbenennen", "Neuer Name:"
             )
             if ok and new_text.strip():
-                self.label.setPlainText(new_text)
-                self.updateLabelPosition()
+                self.update_text(new_text)
             return
 
         # Aktion 3: Farbe ändern
@@ -326,8 +334,10 @@ class NodeEllipse(QGraphicsItem):
         
         # Aktion 4: Kanten löschen
         if action == edge_del_action:
+            itemlist = []
             for edge in self.edges[:]:
-                scene.removeItem(edge)
+                itemlist.append(edge)
+            scene.controller.delete_node(scene, itemlist)
             return
         
         # Aktion 5: Größe ändern
@@ -339,10 +349,7 @@ class NodeEllipse(QGraphicsItem):
                 None, "Größe ändern", "Höhe"
             )
             if ok and new_width and new_height:
-                self.prepareGeometryChange()
-                self.width = float(new_width)
-                self.height = float(new_height)
-                self.update()
+                scene.controller.resize_node(self, self.width, self.height, new_width, new_height)
             return
         
         # Aktion 6: Node als Startnode für Distanzrechnung wählen

@@ -56,7 +56,10 @@ class EdgeItem(QGraphicsPathItem):
         if not new_color.isValid():
             return
         
-        self.color = QColor(new_color)
+        self.scene().controller.change_color(self, self.color, new_color)
+    
+    def apply_color(self, color: QColor):
+        self.color = QColor(color)
         self.set_pen()
         self.colour = [self.color.red(), self.color.green(), self.color.blue()]
         self.update()
@@ -67,6 +70,10 @@ class EdgeItem(QGraphicsPathItem):
     def set_pen(self):
         self.setPen(QPen(self.color, self.p_width))
     
+    def apply_width(self, width):
+        self.p_width = width
+        self.set_pen()
+    
     def contextMenuEvent(self, event):
         menu = QMenu()
 
@@ -75,11 +82,11 @@ class EdgeItem(QGraphicsPathItem):
         width_action = menu.addAction("Dicke ändern")
 
         action = menu.exec(event.screenPos())
+        scene = self.scene()
 
         # Aktion 1: Löschen
         if action == delete_action:
-            scene = self.scene()
-            scene.removeItem(self)
+            scene.controller.delete_node(scene, [self])
             return
         
         # Aktion 2: Farbe ändern
@@ -92,5 +99,4 @@ class EdgeItem(QGraphicsPathItem):
                 None, "Breite ändern", "Breite: "
             )
             if new_width and ok:
-                self.p_width = new_width
-                self.set_pen()
+                scene.controller.resize_edge(self, self.p_width, new_width)

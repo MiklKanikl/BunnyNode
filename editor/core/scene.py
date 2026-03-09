@@ -13,6 +13,10 @@ class DiagramScene(QGraphicsScene):
         self.current_color = QColor(0, 150, 255)  # Standardfarbe
         self.startnode = None
         self.endnode = None
+        self.controller = None
+    
+    def set_services(self, controller):
+        self.controller = controller
     
     def export_png(self, path: str):
         EXPORT_WIDTH = 3000
@@ -41,7 +45,8 @@ class DiagramScene(QGraphicsScene):
             80, 80,
             self.current_color
         )
-        self.addItem(rect)
+        if self.controller:
+            self.controller.add_node(self, rect)
     
     def add_ellipse(self, x, y):
         ellp = NodeEllipse(
@@ -49,7 +54,8 @@ class DiagramScene(QGraphicsScene):
             80, 80,
             self.current_color
         )
-        self.addItem(ellp)
+        if self.controller:
+            self.controller.add_node(self, ellp)
     
     def save_file_dialog(self):
         new_text, ok = QInputDialog.getText(
@@ -62,6 +68,9 @@ class DiagramScene(QGraphicsScene):
         else:
             return
         self.save_scene(filename)
+    
+    # def delete_nodes(self, itemlist):
+    #     self.controller.delete_node(self, itemlist)
     
     def load_file_dialog(self):
         folder = "saves"
@@ -102,17 +111,20 @@ class DiagramScene(QGraphicsScene):
             selected = [i for i in self.selectedItems() if isinstance(i, NodeRect) or isinstance(i, NodeEllipse)]
             if len(selected) == 2:
                 edge = EdgeItem(selected[0], selected[1])
-                self.addItem(edge)
+                if self.controller:
+                    self.controller.add_node(self, edge)
                 return
         #Entf -> ausgewählte Items löschen
         elif event.key() == Qt.Key.Key_Delete:
+            itemlist = []
             for item in self.selectedItems():
                 if isinstance(item, NodeRect) or isinstance(item, NodeEllipse):
                     for edge in item.edges[:]:
-                        self.removeItem(edge)
-                    self.removeItem(item)
+                        itemlist.append(edge)
+                    itemlist.append(item)
                 elif isinstance(item, EdgeItem):
-                    self.removeItem(item)
+                    itemlist.append(item)
+            self.controller.delete_node(self, itemlist)
             return
         # Ctrl+S -> Szene speichern
         elif event.key() == Qt.Key.Key_S and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
@@ -124,6 +136,27 @@ class DiagramScene(QGraphicsScene):
             return
         super().keyPressEvent(event)
     
+    def mousePressEvent(self, event):
+        self.old_pos_list = []
+        self.itemlist = []
+        for i in self.items():
+            if isinstance(i, NodeEllipse) or isinstance(i, NodeRect):
+                self.old_pos_list.append(i.pos())
+                self.itemlist.append(i)
+        super().mousePressEvent(event)
+    
+    def mouseReleaseEvent(self, event):
+        super().mouseReleaseEvent(event)
+        new_pos_list = []
+        for i in self.items():
+            if isinstance(i, NodeEllipse) or isinstance(i, NodeRect):
+                new_pos_list.append(i.pos())
+        if self.items() != []:
+            for i in self.old_pos_list:
+                if i != new_pos_list[self.old_pos_list.index(i)]:
+                    self.controller.move_node(self.itemlist, self.old_pos_list, new_pos_list)
+                    break
+
     def save_scene(self, filename): # Szene speichern
         data = {
             "nodes": [],
@@ -179,7 +212,8 @@ class DiagramScene(QGraphicsScene):
             node.id = n["id"]
             node.update_text(n.get("text", ""))
             id_map[node.id] = node
-            self.addItem(node)
+            if self.controller:
+                self.controller.add_node(self, node)
 
         # Edges
         for e in data["edges"]:
@@ -188,7 +222,8 @@ class DiagramScene(QGraphicsScene):
             color = QColor(e["color"][0], e["color"][1], e["color"][2])
             width = e["width"]
             edge = EdgeItem(start, end, color, width)
-            self.addItem(edge)
+            if self.controller:
+                self.controller.add_node(self, edge)
     
     def weighted_graph(self): # Graph mit Kantenlängen (gewichtet)
         g = {}
