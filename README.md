@@ -5,13 +5,15 @@ Bunnynode is a lightweight, interactive graph editor for building, analysing and
 ## Features
 - Node and Edge editing
 - Shortest path (Dijkstra) calculation
+- undo/redo commands
+- copy/paste/cut/duplicate
 - Save/Load
 - PNG Export
 - Multi selection, zoom & pan
 - custom file format
 
 ## Dependencies
-- Python 3.10+
+- Python 3.14+
 - PyQt6
 - pytest (for testing)
 
@@ -36,4 +38,4 @@ You can save your graph with ctrl+s, load an existing one with ctrl+o or alterna
 
 ### Other
 
-With DEL you can delete multiple Nodes at a time, which you have selected
+With DEL you can delete all selected items at once. For easier creating of same items over and over you can: copy (Ctrl+C), paste (Ctrl+V), cut (Ctrl+X) and duplicate (Ctrl+D).

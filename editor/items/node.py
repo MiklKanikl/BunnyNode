@@ -9,7 +9,7 @@ class NodeRect(QGraphicsItem):
     """Ein einzelner verschiebbarer und beschriftbarer Rechtecksknoten."""
     _id_counter = 0
 
-    def __init__(self, x, y, w, h, color):
+    def __init__(self, x, y, w, h, color, text=""):
         self.width = float(w)
         self.height = float(h)
         super().__init__()
@@ -31,8 +31,8 @@ class NodeRect(QGraphicsItem):
         self.brush = QBrush(self.color)
 
         # Textobjekt in der Mitte
-        self.label = QGraphicsTextItem("", self)
-        self.text = ""
+        self.text = text
+        self.label = QGraphicsTextItem(self.text, self)
         self.label.setDefaultTextColor(QColor("white"))
         self.updateLabelPosition()
     
@@ -188,7 +188,7 @@ class NodeEllipse(QGraphicsItem):
     """Ein einzelner verschiebbarer Kreisknoten."""
     _id_counter = 0
 
-    def __init__(self, x, y, w, h, color):
+    def __init__(self, x, y, w, h, color, text=""):
         super().__init__()
         self.width = float(w)
         self.height = float(h)
@@ -210,8 +210,8 @@ class NodeEllipse(QGraphicsItem):
         self.pen = QPen(Qt.GlobalColor.black, 2)
 
         # Textobjekt in der Mitte
-        self.label = QGraphicsTextItem("", self)
-        self.text = ""
+        self.text = text
+        self.label = QGraphicsTextItem(self.text, self)
         self.label.setDefaultTextColor(QColor("white"))
         self.updateLabelPosition()
     

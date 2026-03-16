@@ -6,10 +6,13 @@ from editor.commands.rename_node import RenameNodeCommand
 from editor.commands.change_color import ChangeColorCommand
 from editor.commands.resize_node import ResizeNodeCommand
 from editor.commands.resize_edge import ResizeEdgeCommand
+from editor.commands.paste_command import PasteCommand
+from editor.controller.clipboard_controller import ClipboardController
 
 class AppController:
     def __init__(self):
         self.undostack = QUndoStack()
+        self.clipboard = ClipboardController()
     
     def add_node(self, scene, node):
         cmd = AddNodeCommand(scene, node)
@@ -37,4 +40,8 @@ class AppController:
     
     def resize_edge(self, edge, old_width, new_width):
         cmd = ResizeEdgeCommand(edge, old_width, new_width)
+        self.undostack.push(cmd)
+    
+    def paste(self, scene):
+        cmd = PasteCommand(scene)
         self.undostack.push(cmd)

@@ -69,9 +69,6 @@ class DiagramScene(QGraphicsScene):
             return
         self.save_scene(filename)
     
-    # def delete_nodes(self, itemlist):
-    #     self.controller.delete_node(self, itemlist)
-    
     def load_file_dialog(self):
         folder = "saves"
         os.makedirs(folder, exist_ok=True)
@@ -100,8 +97,8 @@ class DiagramScene(QGraphicsScene):
             pos = view.mapToScene(mouse_pos)
 
             self.add_ellipse(pos.x(), pos.y())
-        #C -> Farbe ändern
-        elif event.key() == Qt.Key.Key_C:
+        #1 -> Farbe ändern
+        elif event.key() == Qt.Key.Key_1:
             chosen = QColorDialog.getColor(self.current_color)
             if chosen.isValid():
                 self.current_color = chosen
@@ -116,15 +113,7 @@ class DiagramScene(QGraphicsScene):
                 return
         #Entf -> ausgewählte Items löschen
         elif event.key() == Qt.Key.Key_Delete:
-            itemlist = []
-            for item in self.selectedItems():
-                if isinstance(item, NodeRect) or isinstance(item, NodeEllipse):
-                    for edge in item.edges[:]:
-                        itemlist.append(edge)
-                    itemlist.append(item)
-                elif isinstance(item, EdgeItem):
-                    itemlist.append(item)
-            self.controller.delete_node(self, itemlist)
+            self.delete()
             return
         # Ctrl+S -> Szene speichern
         elif event.key() == Qt.Key.Key_S and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
@@ -133,6 +122,24 @@ class DiagramScene(QGraphicsScene):
         # Ctrl+O -> Szene laden
         elif event.key() == Qt.Key.Key_O and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             self.load_file_dialog()
+            return
+        # Crtl+C -> Kopieren
+        elif event.key() == Qt.Key.Key_C and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            self.controller.clipboard.copy(self.selectedItems())
+            return
+        # Ctrl+V -> Einfügen
+        elif event.key() == Qt.Key.Key_V and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            self.controller.paste(self)
+            return
+        # Ctrl+X -> Ausschneiden
+        elif event.key() == Qt.Key.Key_X and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            self.controller.clipboard.copy(self.selectedItems())
+            self.delete()
+            return
+        # Ctrl+D -> Duplizieren
+        elif event.key() == Qt.Key.Key_D and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            self.controller.clipboard.copy(self.selectedItems())
+            self.controller.paste(self)
             return
         super().keyPressEvent(event)
     
@@ -156,6 +163,17 @@ class DiagramScene(QGraphicsScene):
                 if i != new_pos_list[self.old_pos_list.index(i)]:
                     self.controller.move_node(self.itemlist, self.old_pos_list, new_pos_list)
                     break
+    
+    def delete(self):
+        itemlist = []
+        for item in self.selectedItems():
+            if isinstance(item, NodeRect) or isinstance(item, NodeEllipse):
+                for edge in item.edges[:]:
+                    itemlist.append(edge)
+                itemlist.append(item)
+            elif isinstance(item, EdgeItem):
+                itemlist.append(item)
+        self.controller.delete_node(self, itemlist)
 
     def save_scene(self, filename): # Szene speichern
         data = {
