@@ -31,6 +31,7 @@ python main.py
 ### Nodes and Edges
 
 You can create ellipse nodes with E and rectangle nodes with R or via the toolbar. You can move them around or change their propreties via the contextmenu by rightclicking them. Select two nodes and then click L to create an edge between them.
+With DEL you can delete all selected items at once. For easier creating of same items over and over you can: copy (Ctrl+C), paste (Ctrl+V), cut (Ctrl+X) and duplicate (Ctrl+D).
 
 ### File manipulation
 
@@ -38,4 +39,4 @@ You can save your graph with ctrl+s, load an existing one with ctrl+o or alterna
 
 ### Other
 
-With DEL you can delete all selected items at once. For easier creating of same items over and over you can: copy (Ctrl+C), paste (Ctrl+V), cut (Ctrl+X) and duplicate (Ctrl+D).
+You can compute the path distance between two selected nodes that are connected. For that you can right click on the nodes and choose one as the start node and one as the endnode.

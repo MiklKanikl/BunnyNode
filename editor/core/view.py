@@ -36,7 +36,7 @@ class DiagramView(QGraphicsView):
         os.makedirs(folder, exist_ok=True)
         path, _ = QFileDialog.getSaveFileName(
             self,
-            "Diagramm exportieren",
+            "Export as PNG",
             folder,
             f"*.png"
         )

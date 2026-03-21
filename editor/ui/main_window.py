@@ -7,7 +7,7 @@ from editor.controller.app_controller import AppController
 class EditorWindow(QMainWindow):
     def __init__(self, view):
         super().__init__()
-        self.setWindowTitle("Diagrammeditor")
+        self.setWindowTitle("Diagrameditor")
         self.setWindowIcon(QIcon(icon("window.png")))
         self.setCentralWidget(view)
         self.build_toolbar()
@@ -27,16 +27,16 @@ class EditorWindow(QMainWindow):
         toolbar.addAction(redo_action)
     
     def build_toolbar(self):
-        tb = QToolBar("Werkzeuge", self)
+        tb = QToolBar("Tools", self)
         tb.setIconSize(QSize(32, 32))
         self.addToolBar(tb)
 
-        add_rect = QAction(QIcon(icon("add_rect.png")), "Rechteck", self)
-        add_ellipse = QAction(QIcon(icon("add_ellipse.png")), "Kreis", self)
-        save = QAction(QIcon(icon("save.png")), "Speichern", self)
-        load = QAction(QIcon(icon("load.png")), "Laden", self)
-        export_png = QAction(QIcon(icon("export.png")), "PNG exportieren", self)
-        dist = QAction(QIcon(icon("distance.png")), "Entfernung", self)
+        add_rect = QAction(QIcon(icon("add_rect.png")), "Rectangle", self)
+        add_ellipse = QAction(QIcon(icon("add_ellipse.png")), "Ellipse", self)
+        save = QAction(QIcon(icon("save.png")), "Save", self)
+        load = QAction(QIcon(icon("load.png")), "Load", self)
+        export_png = QAction(QIcon(icon("export.png")), "Export PNG", self)
+        dist = QAction(QIcon(icon("distance.png")), "Distance", self)
 
         tb.addAction(add_rect)
         tb.addAction(add_ellipse)
@@ -53,5 +53,5 @@ class EditorWindow(QMainWindow):
         dist.triggered.connect(self.centralWidget().compute_distance)
 
         self.setStatusBar(QStatusBar(self))
-        self.status = QLabel("Bereit")
+        self.status = QLabel("Ready")
         self.statusBar().addPermanentWidget(self.status)

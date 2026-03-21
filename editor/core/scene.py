@@ -1,6 +1,6 @@
-from PyQt6.QtWidgets import QGraphicsScene, QColorDialog, QInputDialog, QDialog, QFileDialog
+from PyQt6.QtWidgets import QGraphicsScene, QColorDialog, QInputDialog, QFileDialog
 from PyQt6.QtGui import QColor, QCursor, QImage, QPainter
-from PyQt6.QtCore import Qt, QRectF, QTimer
+from PyQt6.QtCore import Qt, QRectF
 from editor.items.node import NodeRect, NodeEllipse
 from editor.items.edge import EdgeItem
 from editor.calculations.dijkstra import shortest_path
@@ -59,7 +59,7 @@ class DiagramScene(QGraphicsScene):
     
     def save_file_dialog(self):
         new_text, ok = QInputDialog.getText(
-            None, "Speichern unter", "Dateiname (ohne Endung):", text="diagram"
+            None, "Save As", "Filename (without extension):", text="diagram"
         )
         if ok and new_text.strip():
             folder = "saves"
@@ -75,9 +75,9 @@ class DiagramScene(QGraphicsScene):
 
         filename, _ = QFileDialog.getOpenFileName(
             None,
-            "Laden",
+            "load",
             folder,                      
-            "Diagramm-Dateien (*.diagram *.json)"
+            "Diagram-files (*.diagram *.json)"
         )
         if filename:
             self.load_scene(filename)
@@ -264,12 +264,12 @@ class DiagramScene(QGraphicsScene):
         g = self.weighted_graph()
         d, prev = shortest_path(g, a, b)
         if d is None:
-            self.show_distance("Kein Pfad")
+            self.show_distance("No path found")
         else:
-            self.show_distance(f"Distanz: {round(d,2)}")
-    
+            self.show_distance(f"Distance: {round(d,2)}")
+
     def setup_path_compution(self):
-        if self.startnode and self.endnode:
+        if self.startnode and self.endnode and self.startnode in self.items() and self.endnode in self.items():
             self.compute_shortest(self.startnode, self.endnode)
         else:
-            self.show_distance("Keine Nodes ausgewählt")
+            self.show_distance("No nodes selected")
