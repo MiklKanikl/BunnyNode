@@ -1,7 +1,10 @@
 from PyQt6.QtWidgets import QGraphicsScene, QColorDialog, QInputDialog, QFileDialog
 from PyQt6.QtGui import QColor, QCursor, QImage, QPainter
 from PyQt6.QtCore import Qt, QRectF
-from editor.items.node import NodeRect, NodeEllipse
+from editor.items.node import NodeItem
+from editor.items.rectangle import NodeRect
+from editor.items.ellipse import NodeEllipse
+from editor.items.image import ImageNode
 from editor.items.edge import EdgeItem
 from editor.calculations.dijkstra import shortest_path
 import os
@@ -57,6 +60,15 @@ class DiagramScene(QGraphicsScene):
         if self.controller:
             self.controller.add_node(self, ellp)
     
+    def add_image(self, x, y):
+        image = ImageNode(
+            x, y,
+            80, 80,
+            self.current_color,
+        )
+        if self.controller:
+            self.controller.add_node(self, image)
+    
     def save_file_dialog(self):
         new_text, ok = QInputDialog.getText(
             None, "Save As", "Filename (without extension):", text="diagram"
@@ -105,7 +117,7 @@ class DiagramScene(QGraphicsScene):
             return
         #L -> Kante zwischen zwei ausgewählten Nodes erstellen
         elif event.key() == Qt.Key.Key_L:
-            selected = [i for i in self.selectedItems() if isinstance(i, NodeRect) or isinstance(i, NodeEllipse)]
+            selected = [i for i in self.selectedItems() if isinstance(i, NodeItem)]
             if len(selected) == 2:
                 edge = EdgeItem(selected[0], selected[1])
                 if self.controller:
@@ -167,7 +179,7 @@ class DiagramScene(QGraphicsScene):
     def delete(self):
         itemlist = []
         for item in self.selectedItems():
-            if isinstance(item, NodeRect) or isinstance(item, NodeEllipse):
+            if isinstance(item, NodeItem):
                 for edge in item.edges[:]:
                     itemlist.append(edge)
                 itemlist.append(item)
@@ -181,16 +193,24 @@ class DiagramScene(QGraphicsScene):
             "edges": []
         }
         for item in self.items():
-            if isinstance(item, NodeRect) or isinstance(item, NodeEllipse): # Nodes
+            if isinstance(item, NodeItem):
+                typ_str = ""
+                if isinstance(item, NodeRect):
+                    typ_str = "rect"
+                elif isinstance(item, NodeEllipse):
+                    typ_str = "ellipse"
+                elif isinstance(item, ImageNode):
+                    typ_str = "image"
                 node = {
                     "id": item.id,
-                    "type": "rect" if isinstance(item, NodeRect) else "ellipse",
+                    "type": typ_str,
                     "x": item.scenePos().x(),
                     "y": item.scenePos().y(),
                     "width": item.width,
                     "height": item.height,
                     "color": item.colour,
-                    "text": item.text
+                    "text": item.text,
+                    "custom_param": item.custom_param
                 }
                 data["nodes"].append(node)
 
@@ -219,16 +239,24 @@ class DiagramScene(QGraphicsScene):
                 node = NodeRect(
                     n["x"], n["y"],
                     n["width"], n["height"],
-                    QColor(n["color"][0], n["color"][1], n["color"][2])
+                    QColor(n["color"][0], n["color"][1], n["color"][2]),
+                    text=n.get("text", "")
                 )
             elif n["type"] == "ellipse":
                 node = NodeEllipse(
                     n["x"], n["y"],
                     n["width"], n["height"],
-                    QColor(n["color"][0], n["color"][1], n["color"][2])
+                    QColor(n["color"][0], n["color"][1], n["color"][2]),
+                    text=n.get("text", "")
+                )
+            elif n["type"] == "image":
+                node = ImageNode(
+                    n["x"], n["y"],
+                    n["width"], n["height"],
+                    QColor(n["color"][0], n["color"][1], n["color"][2]),
+                    custom_param=n.get("custom_param", [])
                 )
             node.id = n["id"]
-            node.update_text(n.get("text", ""))
             id_map[node.id] = node
             if self.controller:
                 self.controller.add_node(self, node)

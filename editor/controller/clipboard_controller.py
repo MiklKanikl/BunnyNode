@@ -1,6 +1,9 @@
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
-from editor.items.node import NodeRect, NodeEllipse
+from editor.items.image import ImageNode
+from editor.items.node import NodeItem
+from editor.items.rectangle import NodeRect
+from editor.items.ellipse import NodeEllipse
 from editor.items.edge import EdgeItem
 
 class ClipboardController:
@@ -13,16 +16,24 @@ class ClipboardController:
             "edges": []
         }
         for item in items:
-            if isinstance(item, NodeRect) or isinstance(item, NodeEllipse):
+            if isinstance(item, NodeItem):
+                typ_str = ""
+                if isinstance(item, NodeRect):
+                    typ_str = "rect"
+                elif isinstance(item, NodeEllipse):
+                    typ_str = "ellipse"
+                elif isinstance(item, ImageNode):
+                    typ_str = "image"
                 node = {
-                    "type": "rect" if isinstance(item, NodeRect) else "ellipse",
+                    "type": typ_str,
                     "x": item.scenePos().x(),
                     "y": item.scenePos().y(),
                     "width": item.width,
                     "height": item.height,
                     "color": item.colour,
                     "text": item.text,
-                    "id": item.id
+                    "id": item.id,
+                    "custom_param": item.custom_param
                 }
                 self.clipboard_data["nodes"].append(node)
             elif isinstance(item, EdgeItem):
@@ -55,6 +66,16 @@ class ClipboardController:
                     data["width"], data["height"],
                     QColor(data["color"][0], data["color"][1], data["color"][2]),
                     data.get("text", "")
+                )
+                items.append(node)
+                id_map[data.get("id", id(node))] = node
+            elif data["type"] == "image":
+                node = ImageNode(
+                    data["x"] + 10, data["y"] + 10,
+                    data["width"], data["height"],
+                    QColor(data["color"][0], data["color"][1], data["color"][2]),
+                    text=data.get("text", ""),
+                    custom_param=data.get("custom_param", [])
                 )
                 items.append(node)
                 id_map[data.get("id", id(node))] = node

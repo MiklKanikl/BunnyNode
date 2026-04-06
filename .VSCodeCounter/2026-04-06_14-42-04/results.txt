@@ -1,0 +1,54 @@
+Date : 2026-04-06 14:42:04
+Directory : c:\Misha Doc\GitHub\Diagrammeditor\editor
+Total : 23 files,  1036 codes, 39 comments, 191 blanks, all 1266 lines
+
+Languages
++----------+------------+------------+------------+------------+------------+
+| language | files      | code       | comment    | blank      | total      |
++----------+------------+------------+------------+------------+------------+
+| Python   |         23 |      1,036 |         39 |        191 |      1,266 |
++----------+------------+------------+------------+------------+------------+
+
+Directories
++------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                         | files      | code       | comment    | blank      | total      |
++------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                            |         23 |      1,036 |         39 |        191 |      1,266 |
+| . (Files)                                                                    |          2 |          5 |          0 |          3 |          8 |
+| calculations                                                                 |          1 |         26 |          0 |          4 |         30 |
+| commands                                                                     |         10 |        145 |          0 |         28 |        173 |
+| controller                                                                   |          2 |        110 |          0 |         15 |        125 |
+| core                                                                         |          2 |        333 |         16 |         53 |        402 |
+| items                                                                        |          5 |        362 |         23 |         77 |        462 |
+| ui                                                                           |          1 |         55 |          0 |         11 |         66 |
++------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++------------------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| filename                                                                     | language | code       | comment    | blank      | total      |
++------------------------------------------------------------------------------+----------+------------+------------+------------+------------+
+| c:\Misha Doc\GitHub\Diagrammeditor\editor\__init__.py                        | Python   |          0 |          0 |          1 |          1 |
+| c:\Misha Doc\GitHub\Diagrammeditor\editor\calculations\dijkstra.py           | Python   |         26 |          0 |          4 |         30 |
+| c:\Misha Doc\GitHub\Diagrammeditor\editor\commands\__init__.py               | Python   |          0 |          0 |          1 |          1 |
+| c:\Misha Doc\GitHub\Diagrammeditor\editor\commands\add_node.py               | Python   |         14 |          0 |          3 |         17 |
+| c:\Misha Doc\GitHub\Diagrammeditor\editor\commands\change_color.py           | Python   |         15 |          0 |          3 |         18 |
+| c:\Misha Doc\GitHub\Diagrammeditor\editor\commands\delete_node.py            | Python   |         16 |          0 |          3 |         19 |
+| c:\Misha Doc\GitHub\Diagrammeditor\editor\commands\load_image_command.py     | Python   |         18 |          0 |          3 |         21 |
+| c:\Misha Doc\GitHub\Diagrammeditor\editor\commands\move_node.py              | Python   |         18 |          0 |          3 |         21 |
+| c:\Misha Doc\GitHub\Diagrammeditor\editor\commands\paste_command.py          | Python   |         17 |          0 |          3 |         20 |
+| c:\Misha Doc\GitHub\Diagrammeditor\editor\commands\rename_node.py            | Python   |         15 |          0 |          3 |         18 |
+| c:\Misha Doc\GitHub\Diagrammeditor\editor\commands\resize_edge.py            | Python   |         15 |          0 |          3 |         18 |
+| c:\Misha Doc\GitHub\Diagrammeditor\editor\commands\resize_node.py            | Python   |         17 |          0 |          3 |         20 |
+| c:\Misha Doc\GitHub\Diagrammeditor\editor\controller\app_controller.py       | Python   |         42 |          0 |         10 |         52 |
+| c:\Misha Doc\GitHub\Diagrammeditor\editor\controller\clipboard_controller.py | Python   |         68 |          0 |          5 |         73 |
+| c:\Misha Doc\GitHub\Diagrammeditor\editor\core\scene.py                      | Python   |        244 |         13 |         29 |        286 |
+| c:\Misha Doc\GitHub\Diagrammeditor\editor\core\view.py                       | Python   |         89 |          3 |         24 |        116 |
+| c:\Misha Doc\GitHub\Diagrammeditor\editor\items\edge.py                      | Python   |         74 |          4 |         24 |        102 |
+| c:\Misha Doc\GitHub\Diagrammeditor\editor\items\ellipse.py                   | Python   |         11 |          1 |          1 |         13 |
+| c:\Misha Doc\GitHub\Diagrammeditor\editor\items\image.py                     | Python   |        125 |          7 |         19 |        151 |
+| c:\Misha Doc\GitHub\Diagrammeditor\editor\items\node.py                      | Python   |        141 |         10 |         31 |        182 |
+| c:\Misha Doc\GitHub\Diagrammeditor\editor\items\rectangle.py                 | Python   |         11 |          1 |          2 |         14 |
+| c:\Misha Doc\GitHub\Diagrammeditor\editor\resources.py                       | Python   |          5 |          0 |          2 |          7 |
+| c:\Misha Doc\GitHub\Diagrammeditor\editor\ui\main_window.py                  | Python   |         55 |          0 |         11 |         66 |
+| Total                                                                        |          |      1,036 |         39 |        191 |      1,266 |
++------------------------------------------------------------------------------+----------+------------+------------+------------+------------+

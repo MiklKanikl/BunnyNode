@@ -1,6 +1,7 @@
 from PyQt6.QtGui import QUndoStack
 from editor.commands.add_node import AddNodeCommand
 from editor.commands.delete_node import DeleteNodeCommand
+from editor.commands.load_image_command import LoadImageCommand
 from editor.commands.move_node import MoveNodeCommand
 from editor.commands.rename_node import RenameNodeCommand
 from editor.commands.change_color import ChangeColorCommand
@@ -44,4 +45,8 @@ class AppController:
     
     def paste(self, scene):
         cmd = PasteCommand(scene)
+        self.undostack.push(cmd)
+    
+    def load_image(self, node, old_width, old_height, old_img_path, new_img_path):
+        cmd = LoadImageCommand(node, old_width, old_height, old_img_path, new_img_path)
         self.undostack.push(cmd)

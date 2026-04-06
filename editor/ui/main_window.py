@@ -10,7 +10,7 @@ class EditorWindow(QMainWindow):
         self.setWindowTitle("Diagrameditor")
         self.setWindowIcon(QIcon(icon("window.png")))
         self.setCentralWidget(view)
-        self.build_toolbar()
+        self.build_menubar()
         self.controller = AppController()
         undo_action = self.controller.undostack.createUndoAction(
             self, "Undo"
@@ -26,30 +26,39 @@ class EditorWindow(QMainWindow):
         toolbar.addAction(undo_action)
         toolbar.addAction(redo_action)
     
-    def build_toolbar(self):
-        tb = QToolBar("Tools", self)
-        tb.setIconSize(QSize(32, 32))
-        self.addToolBar(tb)
+    def build_menubar(self):
+        menu = self.menuBar()
+
+        add_menu = menu.addMenu("&New")
+        file_menu = menu.addMenu("&File")
+        calc_menu = menu.addMenu("&Calc")
 
         add_rect = QAction(QIcon(icon("add_rect.png")), "Rectangle", self)
-        add_ellipse = QAction(QIcon(icon("add_ellipse.png")), "Ellipse", self)
-        save = QAction(QIcon(icon("save.png")), "Save", self)
-        load = QAction(QIcon(icon("load.png")), "Load", self)
-        export_png = QAction(QIcon(icon("export.png")), "Export PNG", self)
-        dist = QAction(QIcon(icon("distance.png")), "Distance", self)
-
-        tb.addAction(add_rect)
-        tb.addAction(add_ellipse)
-        tb.addAction(save)
-        tb.addAction(load)
-        tb.addAction(export_png)
-        tb.addAction(dist)
-
+        add_menu.addAction(add_rect)
         add_rect.triggered.connect(self.centralWidget().create_rect)
+
+        add_ellipse = QAction(QIcon(icon("add_ellipse.png")), "Ellipse", self)
+        add_menu.addAction(add_ellipse)
         add_ellipse.triggered.connect(self.centralWidget().create_ellipse)
+
+        add_image = QAction(QIcon(icon("add_image.png")), "Image", self)
+        add_menu.addAction(add_image)
+        add_image.triggered.connect(self.centralWidget().create_image)
+
+        save = QAction(QIcon(icon("save.png")), "Save", self)
+        file_menu.addAction(save)
         save.triggered.connect(self.centralWidget().save_diagram)
+
+        load = QAction(QIcon(icon("load.png")), "Load", self)
+        file_menu.addAction(load)
         load.triggered.connect(self.centralWidget().load_a_diagram)
+
+        export_png = QAction(QIcon(icon("export.png")), "Export PNG", self)
+        file_menu.addAction(export_png)
         export_png.triggered.connect(self.centralWidget().export)
+
+        dist = QAction(QIcon(icon("distance.png")), "Distance", self)
+        calc_menu.addAction(dist)
         dist.triggered.connect(self.centralWidget().compute_distance)
 
         self.setStatusBar(QStatusBar(self))

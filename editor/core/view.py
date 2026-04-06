@@ -18,13 +18,15 @@ class DiagramView(QGraphicsView):
         self._panning = False
         self._pan_start = QPoint()
     
-    # Funktionen um Window mit Szene zu verbinden
     def create_rect(self):
         self.scene().add_rect(1500, 1500)
     
     def create_ellipse(self):
         self.scene().add_ellipse(1500, 1500)
     
+    def create_image(self):
+        self.scene().add_image(1500, 1500)
+
     def save_diagram(self):
         self.scene().save_file_dialog()
     

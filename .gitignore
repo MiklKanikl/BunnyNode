@@ -2,14 +2,16 @@ __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
+*.pyc
 
 .pytest_cache/
 .coverage
 
 exports/
-*.png
 
 saves/
 *.json
 
 .DS_store
+
+tasks.md

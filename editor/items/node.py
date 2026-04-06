@@ -2,19 +2,19 @@ from PyQt6.QtWidgets import (
     QGraphicsTextItem, QInputDialog,
     QMenu, QGraphicsItem, QColorDialog
 )
-from PyQt6.QtGui import QColor, QBrush, QPen, QAction, QPainter
-from PyQt6.QtCore import Qt, QRectF, QTimer
+from PyQt6.QtGui import QColor, QBrush, QPen, QAction
+from PyQt6.QtCore import QRectF, QTimer
 
-class NodeRect(QGraphicsItem):
-    """A single movable rectangular node."""
+class NodeItem(QGraphicsItem):
     _id_counter = 0
 
-    def __init__(self, x, y, w, h, color, text=""):
+    def __init__(self, x, y, w, h, color, text="", custom_param=[]):
+        self.custom_param = custom_param
         self.width = float(w)
         self.height = float(h)
         super().__init__()
-        self.id = NodeRect._id_counter + NodeEllipse._id_counter
-        NodeRect._id_counter += 1
+        self.id = NodeItem._id_counter
+        NodeItem._id_counter += 1
         self.edges = []
         self.setPos(x, y)
         self.color = QColor(color)
@@ -35,18 +35,13 @@ class NodeRect(QGraphicsItem):
         self.label = QGraphicsTextItem(self.text, self)
         self.label.setDefaultTextColor(QColor("white"))
         self.updateLabelPosition()
+        self.custom_init(custom_param)
+    
+    def custom_init(self, custom_param):
+        pass
     
     def boundingRect(self):
         return QRectF(0.0, 0.0, self.width, self.height)
-    
-    def paint(self, painter, option, widget=None):
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        if self.isSelected():
-            painter.setPen(QPen(QColor("#ffffff"), 3))
-        else:
-            painter.setPen(self.pen)
-        painter.setBrush(self.brush)
-        painter.drawRect(self.boundingRect())
 
     def update_text(self, new_text):
         self.scene().controller.rename_node(self, self.text, new_text)
@@ -167,191 +162,10 @@ class NodeRect(QGraphicsItem):
         
         # Aktion 5: Größe ändern
         if action == size_action:
-            new_width, ok = QInputDialog.getDouble(
+            new_width, ok = QInputDialog.getInt(
                 None, "Change Size", "Width:"
             )
-            new_height, ok = QInputDialog.getDouble(
-                None, "Change Size", "Height:"
-            )
-            if ok and new_width and new_height:
-                scene.controller.resize_node(self, self.width, self.height, new_width, new_height)
-            return
-        
-        # Aktion 6: Node als Startnode für Distanzrechnung wählen
-        if action == startnode_action:
-            scene.startnode = self
-            return
-
-        # Aktion 7: Node als Endnode für Distanzrechnung wählen
-        if action == endnode_action:
-            scene.endnode = self
-            return
-
-class NodeEllipse(QGraphicsItem):
-    """A single movable circular node."""
-    _id_counter = 0
-
-    def __init__(self, x, y, w, h, color, text=""):
-        super().__init__()
-        self.width = float(w)
-        self.height = float(h)
-        self.color = QColor(color)
-        self.id = NodeEllipse._id_counter + NodeRect._id_counter
-        NodeEllipse._id_counter += 1
-        self.edges = []
-        self.setPos(x, y)
-        self.colour = [color.red(), color.green(), color.blue()]
-
-        self.setFlags(
-            QGraphicsItem.GraphicsItemFlag.ItemIsMovable |
-            QGraphicsItem.GraphicsItemFlag.ItemIsSelectable |
-            QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges
-        )
-
-        # Farbe + Rahmen
-        self.brush = QBrush(self.color)
-        self.pen = QPen(Qt.GlobalColor.black, 2)
-
-        # Textobjekt in der Mitte
-        self.text = text
-        self.label = QGraphicsTextItem(self.text, self)
-        self.label.setDefaultTextColor(QColor("white"))
-        self.updateLabelPosition()
-    
-    def boundingRect(self):
-        return QRectF(0, 0, self.width, self.height)
-    
-    def paint(self, painter, option, widget=None):
-        if self.isSelected():
-            painter.setPen(QPen(QColor("#ffffff"), 3))
-        else:
-            painter.setPen(self.pen)
-        painter.setBrush(self.brush)
-        painter.drawEllipse(self.boundingRect())
-    
-    def update_text(self, new_text):
-        self.scene().controller.rename_node(self, self.text, new_text)
-        self.text = new_text
-        self.updateLabelPosition()
-    
-    def itemChange(self, change, value):
-        if change == QGraphicsItem.GraphicsItemChange.ItemPositionHasChanged:
-            for edge in self.edges:
-                edge.update_position()
-        return super().itemChange(change, value)
-    
-    def updateLabelPosition(self):
-        text_rect = self.label.boundingRect()
-        x = (self.width - text_rect.width()) / 2
-        y = (self.height - text_rect.height()) / 2
-        self.label.setPos(x, y)
-    
-    def mouseDoubleClickEvent(self, event):
-        new_text, ok = QInputDialog.getText(None, "Enter Label", "Text:")
-        if ok and new_text.strip():
-            self.update_text(new_text)
-        super().mouseDoubleClickEvent(event)
-    
-    # Farbänderungslogik
-    def apply_color(self, color: QColor):
-        self.color = QColor(color)
-        self.brush = QBrush(self.color)
-        self.colour = [self.color.red(), self.color.green(), self.color.blue()]
-        self.update()
-    
-    def open_color_dialog(self):
-        scene = self.scene()
-        if not scene:
-            return
-
-        views = scene.views()
-        if not views:
-            return
-
-        parent = views[0]
-
-        new_color = QColorDialog.getColor(
-            self.color,
-            parent,
-            "Choose Color"
-        )
-        
-        if not new_color.isValid():
-            return
-
-        self.scene().controller.change_color(self, self.color, new_color)
-
-    def request_color_change(self):
-        QTimer.singleShot(0, self.open_color_dialog)
-    
-    def resize(self, h, w):
-        self.prepareGeometryChange()
-        self.width = float(w)
-        self.height = float(h)
-        self.update()
-        self.updateLabelPosition()
-        for edge in self.edges:
-            edge.update_position()
-    
-    def contextMenuEvent(self, event):
-        menu = QMenu()
-
-        delete_action = QAction("Delete", menu)
-        rename_action = QAction("Rename", menu)
-        color_action  = QAction("Change Color", menu)
-        edge_del_action = QAction("Delete Edges", menu)
-        size_action = QAction("Change Size", menu)
-        startnode_action = QAction("Select as Start Node", menu)
-        endnode_action = QAction("Select as End Node", menu)
-
-        menu.addAction(delete_action)
-        menu.addAction(rename_action)
-        menu.addAction(color_action)
-        menu.addAction(edge_del_action)
-        menu.addAction(size_action)
-        menu.addAction(startnode_action)
-        menu.addAction(endnode_action)
-
-        action = menu.exec(event.screenPos())
-        scene = self.scene()
-
-        # Aktion 1: Löschen
-        if action == delete_action:
-            itemlist = []
-            for edge in self.edges[:]:
-                itemlist.append(edge)
-            itemlist.append(self)
-            scene.controller.delete_node(scene, itemlist)
-            return
-
-        # Aktion 2: Umbenennen
-        if action == rename_action:
-            new_text, ok = QInputDialog.getText(
-                None, "Rename", "New Name:"
-            )
-            if ok and new_text.strip():
-                self.update_text(new_text)
-            return
-
-        # Aktion 3: Farbe ändern
-        if action == color_action:
-            self.request_color_change()
-            return
-        
-        # Aktion 4: Kanten löschen
-        if action == edge_del_action:
-            itemlist = []
-            for edge in self.edges[:]:
-                itemlist.append(edge)
-            scene.controller.delete_node(scene, itemlist)
-            return
-        
-        # Aktion 5: Größe ändern
-        if action == size_action:
-            new_width, ok = QInputDialog.getDouble(
-                None, "Change Size", "Width:"
-            )
-            new_height, ok = QInputDialog.getDouble(
+            new_height, ok = QInputDialog.getInt(
                 None, "Change Size", "Height:"
             )
             if ok and new_width and new_height:
