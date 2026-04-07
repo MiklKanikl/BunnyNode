@@ -1,0 +1,130 @@
+{
+    "nodes": [
+        {
+            "id": 5,
+            "type": "rect",
+            "x": 1879.0,
+            "y": 1602.0,
+            "width": 80.0,
+            "height": 80.0,
+            "color": [
+                0,
+                150,
+                255
+            ],
+            "text": "",
+            "custom_param": []
+        },
+        {
+            "id": 4,
+            "type": "rect",
+            "x": 1881.0,
+            "y": 1394.0,
+            "width": 80.0,
+            "height": 80.0,
+            "color": [
+                0,
+                150,
+                255
+            ],
+            "text": "",
+            "custom_param": []
+        },
+        {
+            "id": 3,
+            "type": "ellipse",
+            "x": 1554.0,
+            "y": 1605.0,
+            "width": 80.0,
+            "height": 80.0,
+            "color": [
+                0,
+                150,
+                255
+            ],
+            "text": "",
+            "custom_param": []
+        },
+        {
+            "id": 2,
+            "type": "ellipse",
+            "x": 1557.0,
+            "y": 1387.0,
+            "width": 80.0,
+            "height": 80.0,
+            "color": [
+                0,
+                150,
+                255
+            ],
+            "text": "",
+            "custom_param": []
+        },
+        {
+            "id": 1,
+            "type": "image",
+            "x": 1285.0,
+            "y": 1603.0,
+            "width": 80.0,
+            "height": 80.0,
+            "color": [
+                0,
+                150,
+                255
+            ],
+            "text": "",
+            "custom_param": [
+                "editor\\resources\\icons\\add_image.png"
+            ]
+        },
+        {
+            "id": 0,
+            "type": "image",
+            "x": 1287.0,
+            "y": 1387.0,
+            "width": 80.0,
+            "height": 80.0,
+            "color": [
+                0,
+                150,
+                255
+            ],
+            "text": "",
+            "custom_param": [
+                "editor\\resources\\icons\\add_image.png"
+            ]
+        }
+    ],
+    "edges": [
+        {
+            "start": 4,
+            "end": 5,
+            "color": [
+                255,
+                255,
+                255
+            ],
+            "width": 12
+        },
+        {
+            "start": 2,
+            "end": 3,
+            "color": [
+                255,
+                255,
+                255
+            ],
+            "width": 12
+        },
+        {
+            "start": 1,
+            "end": 0,
+            "color": [
+                255,
+                255,
+                255
+            ],
+            "width": 12
+        }
+    ]
+}
