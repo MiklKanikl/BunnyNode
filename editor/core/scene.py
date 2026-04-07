@@ -159,7 +159,7 @@ class DiagramScene(QGraphicsScene):
         self.old_pos_list = []
         self.itemlist = []
         for i in self.items():
-            if isinstance(i, NodeEllipse) or isinstance(i, NodeRect):
+            if isinstance(i, NodeItem):
                 self.old_pos_list.append(i.pos())
                 self.itemlist.append(i)
         super().mousePressEvent(event)
@@ -168,7 +168,7 @@ class DiagramScene(QGraphicsScene):
         super().mouseReleaseEvent(event)
         new_pos_list = []
         for i in self.items():
-            if isinstance(i, NodeEllipse) or isinstance(i, NodeRect):
+            if isinstance(i, NodeItem):
                 new_pos_list.append(i.pos())
         if self.items() != []:
             for i in self.old_pos_list:
