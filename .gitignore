@@ -7,6 +7,8 @@ __pycache__/
 .pytest_cache/
 .coverage
 
+exports
+saves
 
 .DS_store
 
