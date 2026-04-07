@@ -1,0 +1,52 @@
+{
+    "nodes": [
+        {
+            "id": 2,
+            "type": "image",
+            "x": 1516.0,
+            "y": 1566.0,
+            "width": 80.0,
+            "height": 80.0,
+            "color": [
+                0,
+                150,
+                255
+            ],
+            "text": "",
+            "custom_param": [
+                "editor\\resources\\icons\\add_image.png"
+            ]
+        },
+        {
+            "id": 1,
+            "type": "rect",
+            "x": 2153.0,
+            "y": 1527.0,
+            "width": 80.0,
+            "height": 80.0,
+            "color": [
+                0,
+                150,
+                255
+            ],
+            "text": "",
+            "custom_param": []
+        },
+        {
+            "id": 0,
+            "type": "ellipse",
+            "x": 1791.0,
+            "y": 1458.0,
+            "width": 80.0,
+            "height": 80.0,
+            "color": [
+                0,
+                150,
+                255
+            ],
+            "text": "",
+            "custom_param": []
+        }
+    ],
+    "edges": []
+}
