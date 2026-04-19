@@ -61,12 +61,21 @@ class ImageNode(NodeItem):
             self.image_item.setPixmap(scaled_pixmap)
             self.image_item.update()
     
+    def reload_image(self):
+        if self.image_item:
+            previous_size = (int(self.width), int(self.height))
+            pixmap = QPixmap(self.img_file)
+            scaled_pixmap = pixmap.scaled(previous_size[0], previous_size[1], Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            self.image_item.setPixmap(scaled_pixmap)
+            self.image_item.update()
+
     def resize(self, h, w):
         self.prepareGeometryChange()
         self.width = float(w)
         self.height = float(h)
         self.resize_image()
         self.update()
+        self.reload_image()
         self.updateLabelPosition()
         for edge in self.edges:
             edge.update_position()

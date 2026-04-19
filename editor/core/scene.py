@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QGraphicsScene, QColorDialog, QInputDialog, QFileDialog
+from PyQt6.QtWidgets import QGraphicsScene, QColorDialog, QInputDialog, QFileDialog, QMessageBox
 from PyQt6.QtGui import QColor, QCursor, QImage, QPainter
 from PyQt6.QtCore import Qt, QRectF
 from editor.items.node import NodeItem
@@ -80,6 +80,7 @@ class DiagramScene(QGraphicsScene):
         else:
             return
         self.save_scene(filename)
+        self.update_recent_files(filename)
     
     def load_file_dialog(self):
         folder = "saves"
@@ -93,6 +94,15 @@ class DiagramScene(QGraphicsScene):
         )
         if filename:
             self.load_scene(filename)
+            self.update_recent_files(filename)
+    
+    def load_popup(self):
+        popup = QMessageBox()
+        popup.setWindowTitle("Warning")
+        popup.setText("Do you want to load a new diagram? All unsaved changes will be lost.")
+        popup.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        if popup.exec() == QMessageBox.StandardButton.Yes:
+            self.load_file_dialog()
     
     def keyPressEvent(self, event):
         #R -> neues Rechteck an Mausposition
@@ -133,7 +143,7 @@ class DiagramScene(QGraphicsScene):
             return
         # Ctrl+O -> Szene laden
         elif event.key() == Qt.Key.Key_O and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-            self.load_file_dialog()
+            self.load_popup()
             return
         # Crtl+C -> Kopieren
         elif event.key() == Qt.Key.Key_C and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
@@ -187,7 +197,7 @@ class DiagramScene(QGraphicsScene):
                 itemlist.append(item)
         self.controller.delete_node(self, itemlist)
 
-    def save_scene(self, filename): # Szene speichern
+    def save_scene(self, filename):
         data = {
             "nodes": [],
             "edges": []
@@ -214,7 +224,7 @@ class DiagramScene(QGraphicsScene):
                 }
                 data["nodes"].append(node)
 
-            elif isinstance(item, EdgeItem): # Edges
+            elif isinstance(item, EdgeItem):
                 data["edges"].append({
                     "start": item.start_node.id,
                     "end": item.end_node.id,
@@ -225,7 +235,7 @@ class DiagramScene(QGraphicsScene):
         with open(filename, "w") as f:
             json.dump(data, f, indent=4)
     
-    def load_scene(self, filename): # Datei laden
+    def load_scene(self, filename):
         import json
         with open(filename, "r") as f:
             data = json.load(f)
@@ -233,7 +243,6 @@ class DiagramScene(QGraphicsScene):
         self.clear()
         id_map = {}
 
-        # Nodes
         for n in data["nodes"]:
             if n["type"] == "rect":
                 node = NodeRect(
@@ -261,7 +270,6 @@ class DiagramScene(QGraphicsScene):
             if self.controller:
                 self.controller.add_node(self, node)
 
-        # Edges
         for e in data["edges"]:
             start = id_map[e["start"]]
             end = id_map[e["end"]]
@@ -271,10 +279,23 @@ class DiagramScene(QGraphicsScene):
             if self.controller:
                 self.controller.add_node(self, edge)
     
-    def weighted_graph(self): # Graph mit Kantenlängen (gewichtet)
+    def update_recent_files(self, filename):
+        import json
+        with open("editor/recent_files.json", "r") as f:
+            recent_files = json.load(f)
+        
+        if filename in recent_files:
+            recent_files.remove(filename)
+        recent_files.insert(0, filename)
+        recent_files = recent_files[:5]
+
+        with open("editor/recent_files.json", "w") as f:
+            json.dump(recent_files, f, indent=4)
+    
+    def weighted_graph(self):
         g = {}
         for i in self.items():
-            if isinstance(i, NodeRect) or isinstance(i, NodeEllipse):
+            if isinstance(i, NodeItem):
                 g[i] = []
             elif isinstance(i, EdgeItem):
                 dist = i.laenge()
@@ -285,8 +306,7 @@ class DiagramScene(QGraphicsScene):
     def show_distance(self, text):
         for v in self.views():
             win = v.window()
-            if hasattr(win, "status"):
-                win.status.setText(text)
+            win.dist_label.setText(text)
     
     def compute_shortest(self, a, b):
         g = self.weighted_graph()

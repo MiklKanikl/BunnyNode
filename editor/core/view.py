@@ -9,15 +9,20 @@ class DiagramView(QGraphicsView):
         self.setWindowTitle("Diagram Editor")
         self.setRenderHints(QPainter.RenderHint.Antialiasing |
                             QPainter.RenderHint.SmoothPixmapTransform)
-
+        self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
+        self.setResizeAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
+        
         self.zoom = 0
         self.zoom_step = 0.1
-        self.zoom_range = [-5, 5]   # Min/Max Zoom
-
+        self.zoom_range = [-5, 5]
         self.setDragMode(QGraphicsView.DragMode.NoDrag)
         self._panning = False
         self._pan_start = QPoint()
     
+    def update_settings_stats(self):
+        cur_settings = self.scene().controller.get_current_settings()
+        self.zoom_step = 0.1
+
     def create_rect(self):
         self.scene().add_rect(1500, 1500)
     
@@ -30,8 +35,12 @@ class DiagramView(QGraphicsView):
     def save_diagram(self):
         self.scene().save_file_dialog()
     
-    def load_a_diagram(self):
-        self.scene().load_file_dialog()
+    def load_a_diagram(self, popup=True):
+        self.scene().controller.clear_history()
+        if popup:
+            self.scene().load_popup()
+        else:
+            self.scene().load_file_dialog()
     
     def export(self):
         folder = "exports"
@@ -59,18 +68,12 @@ class DiagramView(QGraphicsView):
             zoom_factor = 1 + self.zoom_step
             self.zoom += 1
         elif angle < 0 and self.zoom > self.zoom_range[0]:
-            zoom_factor = 1 - self.zoom_step
+            zoom_factor = 1 / (1 + self.zoom_step)
             self.zoom -= 1
         else:
             return
 
-        # Zoom auf Mausposition
-        old_pos = self.mapToScene(event.position().toPoint())
         self.scale(zoom_factor, zoom_factor)
-        new_pos = self.mapToScene(event.position().toPoint())
-        delta = new_pos - old_pos
-
-        self.translate(delta.x(), delta.y())
 
     # PAN
     def mousePressEvent(self, event):

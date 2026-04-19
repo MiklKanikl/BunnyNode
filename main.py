@@ -15,6 +15,7 @@ def main():
     
     win = EditorWindow(view)
     scene.set_services(win.controller)
+    view.update_settings_stats()
     win.showMaximized()
 
     sys.exit(app.exec())

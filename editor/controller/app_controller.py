@@ -15,6 +15,12 @@ class AppController:
         self.undostack = QUndoStack()
         self.clipboard = ClipboardController()
     
+    def get_current_settings(self):
+        import json
+        with open("your_settings.json", "r") as f:
+            settings = json.load(f)
+        return settings
+    
     def add_node(self, scene, node):
         cmd = AddNodeCommand(scene, node)
         self.undostack.push(cmd)
@@ -50,3 +56,6 @@ class AppController:
     def load_image(self, node, old_width, old_height, old_img_path, new_img_path):
         cmd = LoadImageCommand(node, old_width, old_height, old_img_path, new_img_path)
         self.undostack.push(cmd)
+    
+    def clear_history(self):
+        self.undostack.clear()
