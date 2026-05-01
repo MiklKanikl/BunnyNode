@@ -2,8 +2,9 @@ from PyQt6.QtWidgets import (
     QGraphicsTextItem, QInputDialog,
     QMenu, QGraphicsItem, QColorDialog
 )
-from PyQt6.QtGui import QColor, QBrush, QPen, QAction
+from PyQt6.QtGui import QColor, QBrush, QPen, QAction, QPainterPath
 from PyQt6.QtCore import QRectF, QTimer
+from editor.elements.resize_handle import ResizeHandle
 
 class NodeItem(QGraphicsItem):
     _id_counter = 0
@@ -26,19 +27,27 @@ class NodeItem(QGraphicsItem):
             QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges
         )
 
-        # Farbe + Rahmen
         self.pen = QPen(QColor("black"), 2)
         self.brush = QBrush(self.color)
 
-        # Textobjekt in der Mitte
         self.text = text
         self.label = QGraphicsTextItem(self.text, self)
         self.label.setDefaultTextColor(QColor("white"))
         self.updateLabelPosition()
         self.custom_init(custom_param)
+        self.resize_handle = ResizeHandle(self)
+        self._update_handle_position()
     
     def custom_init(self, custom_param):
         pass
+
+    def _update_handle_position(self):
+        self.resize_handle.setPos(self.width, self.height)
+
+    def shape(self):
+        path = QPainterPath()
+        path.addRect(QRectF(0, 0, self.width, self.height))
+        return path
     
     def boundingRect(self):
         return QRectF(0.0, 0.0, self.width, self.height)
@@ -66,7 +75,6 @@ class NodeItem(QGraphicsItem):
             self.update_text(new_text)
         super().mouseDoubleClickEvent(event)
     
-    # Farbänderungslogik
     def apply_color(self, color: QColor):
         self.color = QColor(color)
         self.brush = QBrush(self.color)
@@ -102,6 +110,7 @@ class NodeItem(QGraphicsItem):
         self.prepareGeometryChange()
         self.width = float(w)
         self.height = float(h)
+        self._update_handle_position()
         self.update()
         self.updateLabelPosition()
         for edge in self.edges:

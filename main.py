@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import QApplication, QGraphicsView
 from editor.core.scene import DiagramScene
-from editor.core.view import DiagramView
-from editor.ui.main_window import EditorWindow
+from editor.ui.view import DiagramView
+from editor.core.main_window import EditorWindow
 
 import sys
 

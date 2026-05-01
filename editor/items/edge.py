@@ -3,23 +3,27 @@ from PyQt6.QtGui import QPainterPath, QPen, QColor
 from PyQt6.QtCore import QTimer
 
 class EdgeItem(QGraphicsPathItem):
-    def __init__(self, start_node, end_node, color=QColor(255, 255, 255), path_width=6):
+    def __init__(self, start_node, end_node, color=QColor(255, 255, 255), path_width=6, custom_param=[]):
         super().__init__()
         self.start_node = start_node
         self.end_node = end_node
+        self.directed = False
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable, True)
 
-        # Edge in beiden Nodes registrieren
         start_node.edges.append(self)
         end_node.edges.append(self)
 
-        self.setZValue(-1)  # hinter Nodes zeichnen
+        self.setZValue(-1)
         self.p_width = path_width
         self.color = color
         self.colour = [color.red(), color.green(), color.blue()]
         self.setPen(QPen(color, path_width))
 
         self.update_position()
+        self.custom_init(custom_param)
+    
+    def custom_init(self, custom_param):
+        pass
 
     def update_position(self):
         start = self.start_node.sceneBoundingRect().center()
@@ -31,7 +35,7 @@ class EdgeItem(QGraphicsPathItem):
 
         self.setPath(path)
     
-    def laenge(self): # Länge des Edges zurückgeben
+    def laenge(self):
         start = self.start_node.sceneBoundingRect().center()
         end = self.end_node.sceneBoundingRect().center()
         return ((start.x() - end.x()) ** 2 + (start.y() - end.y()) ** 2) ** 0.5
@@ -50,7 +54,7 @@ class EdgeItem(QGraphicsPathItem):
         new_color = QColorDialog.getColor(
             self.color,
             parent,
-            "Farbe wählen"
+            "Choose color"
         )
         
         if not new_color.isValid():
@@ -77,9 +81,9 @@ class EdgeItem(QGraphicsPathItem):
     def contextMenuEvent(self, event):
         menu = QMenu()
 
-        delete_action = menu.addAction("Löschen")
-        color_action = menu.addAction("Farbe ändern")
-        width_action = menu.addAction("Dicke ändern")
+        delete_action = menu.addAction("Delete")
+        color_action = menu.addAction("Change color")
+        width_action = menu.addAction("Change width")
 
         action = menu.exec(event.screenPos())
         scene = self.scene()
@@ -96,7 +100,7 @@ class EdgeItem(QGraphicsPathItem):
         # Aktion 3: Dicke ändern
         if action == width_action:
             new_width, ok = QInputDialog.getDouble(
-                None, "Breite ändern", "Breite: "
+                None, "Change width", "Width: "
             )
             if new_width and ok:
                 scene.controller.resize_edge(self, self.p_width, new_width)

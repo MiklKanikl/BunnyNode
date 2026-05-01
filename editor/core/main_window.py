@@ -22,9 +22,15 @@ class EditorWindow(QMainWindow):
         self.build_menubar()
         self.controller = AppController()
         self.build_toolbar()
+        self.build_statusbar()
         self.create_calc_show_panel()
         self.hide_bars()
     
+    def build_statusbar(self):
+        self.setStatusBar(QStatusBar(self))
+        self.status = QLabel("idle")
+        self.statusBar().addPermanentWidget(self.status)
+
     def build_toolbar(self):
         undo_action = self.controller.undostack.createUndoAction(
             self, "Undo"
@@ -44,6 +50,7 @@ class EditorWindow(QMainWindow):
         self.menu = self.menuBar()
 
         add_menu = self.menu.addMenu("&Item")
+        actions_menu = self.menu.addMenu("&Actions")
         file_menu = self.menu.addMenu("&File")
         calc_menu = self.menu.addMenu("&Calc")
         other_menu = self.menu.addMenu("&Other")
@@ -59,6 +66,22 @@ class EditorWindow(QMainWindow):
         add_image = QAction(QIcon(icon("add_image.png")), "Image", self)
         add_menu.addAction(add_image)
         add_image.triggered.connect(self.view.create_image)
+
+        create_edge = QAction(QIcon(icon("add_edge.png")), "Edge", self)
+        add_menu.addAction(create_edge)
+        create_edge.triggered.connect(lambda: self.view.scene().edge_create_dialog(False))
+
+        create_directed_edge = QAction(QIcon(icon("add_directed_edge.png")), "Directed Edge", self)
+        add_menu.addAction(create_directed_edge)
+        create_directed_edge.triggered.connect(lambda: self.view.scene().edge_create_dialog(True))
+
+        change_node_color = QAction("Change Node Color", self)
+        actions_menu.addAction(change_node_color)
+        change_node_color.triggered.connect(lambda: self.view.scene().color_dialog(0))
+
+        change_edge_color = QAction("Change Edge Color", self)
+        actions_menu.addAction(change_edge_color)
+        change_edge_color.triggered.connect(lambda: self.view.scene().color_dialog(1))
 
         new = QAction(QIcon(icon("new_file.png")), "New", self)
         file_menu.addAction(new)
@@ -108,7 +131,7 @@ class EditorWindow(QMainWindow):
 
         panel = QWidget()
         layout = QVBoxLayout(panel)
-        self.dist_label = QLabel("Waiting for computation...")
+        self.dist_label = QLabel("Waiting for Computation...")
         layout.addWidget(self.dist_label)
         layout.addStretch()
 
@@ -120,6 +143,7 @@ class EditorWindow(QMainWindow):
         self.view.scene().controller.clear_history()
         self.stacked_widget.setCurrentWidget(self.welcome_screen)
         self.hide_bars()
+        self.welcome_screen.reload_recent_files()
     
     def open_settings(self):
         self.stacked_widget.setCurrentWidget(self.settings_menu)
@@ -146,11 +170,14 @@ class EditorWindow(QMainWindow):
         self.dock.show()
         self.menu.show()
         self.toolbar.show()
+        self.statusBar().show()
     
     def hide_bars(self):
+        self.dist_label.setText("Waiting for Computation...")
         self.dock.hide()
         self.menu.hide()
         self.toolbar.hide()
+        self.statusBar().hide()
 
 class MyDockWidget(QDockWidget):
     def closeEvent(self, event):

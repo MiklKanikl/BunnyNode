@@ -19,8 +19,10 @@ class ImageNode(NodeItem):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         if self.isSelected():
             painter.setPen(QPen(QColor("#ffffff"), 3))
+            self.resize_handle.show()
         else:
             painter.setPen(self.pen)
+            self.resize_handle.hide()
         painter.setBrush(self.brush)
         painter.drawRect(self.boundingRect())
     
@@ -74,11 +76,17 @@ class ImageNode(NodeItem):
         self.width = float(w)
         self.height = float(h)
         self.resize_image()
+        self._update_handle_position()
         self.update()
         self.reload_image()
         self.updateLabelPosition()
         for edge in self.edges:
             edge.update_position()
+    
+    def _update_handle_position(self):
+        if not hasattr(self, 'resize_handle') or self.resize_handle is None:
+            return
+        self.resize_handle.setPos(self.width, self.height)
     
     def get_aspect_ratio(self):
         return self.width / self.height

@@ -1,11 +1,12 @@
-from PyQt6.QtWidgets import QGraphicsScene, QColorDialog, QInputDialog, QFileDialog, QMessageBox
-from PyQt6.QtGui import QColor, QCursor, QImage, QPainter
+from PyQt6.QtWidgets import QGraphicsScene, QColorDialog, QInputDialog, QFileDialog, QMessageBox, QGraphicsPixmapItem
+from PyQt6.QtGui import QColor, QCursor, QImage, QPainter, QTransform
 from PyQt6.QtCore import Qt, QRectF
 from editor.items.node import NodeItem
 from editor.items.rectangle import NodeRect
 from editor.items.ellipse import NodeEllipse
 from editor.items.image import ImageNode
 from editor.items.edge import EdgeItem
+from editor.items.directed_edge import DirectedEdgeItem
 from editor.calculations.dijkstra import shortest_path
 import os
 
@@ -13,13 +14,19 @@ class DiagramScene(QGraphicsScene):
     def __init__(self):
         super().__init__()
         self.setSceneRect(0, 0, 3000, 3000)
-        self.current_color = QColor(0, 150, 255)  # Standardfarbe
+        self.current_color = QColor(0, 150, 255)
+        self.current_color_edge = QColor(255, 255, 255)
         self.startnode = None
         self.endnode = None
+        self.edge_nodes = [None, None]
         self.controller = None
+        self.creating_edge = 0
+        self.win = None
+        self.directed_edge_mode = False
     
     def set_services(self, controller):
         self.controller = controller
+        self.win = self.views()[0].window()
     
     def export_png(self, path: str):
         EXPORT_WIDTH = 3000
@@ -104,6 +111,22 @@ class DiagramScene(QGraphicsScene):
         if popup.exec() == QMessageBox.StandardButton.Yes:
             self.load_file_dialog()
     
+    def color_dialog(self, item_type):
+        if item_type == 0:
+            new_color = QColorDialog.getColor(self.current_color)
+            if new_color.isValid():
+                self.current_color = new_color
+        else:
+            new_color = QColorDialog.getColor(self.current_color_edge)
+            if new_color.isValid():
+                self.current_color_edge = new_color
+    
+    def edge_create_dialog(self, directed):
+        if self.creating_edge == 0:
+                self.win.status.setText("Select first node")
+                self.creating_edge = 1
+                self.directed_edge_mode = directed
+    
     def keyPressEvent(self, event):
         #R -> neues Rechteck an Mausposition
         if event.key() == Qt.Key.Key_R:
@@ -121,18 +144,36 @@ class DiagramScene(QGraphicsScene):
             self.add_ellipse(pos.x(), pos.y())
         #1 -> Farbe ändern
         elif event.key() == Qt.Key.Key_1:
-            chosen = QColorDialog.getColor(self.current_color)
-            if chosen.isValid():
-                self.current_color = chosen
+            self.color_dialog(0)
+            return
+        #2 -> Farbe der Kante ändern
+        elif event.key() == Qt.Key.Key_2:
+            self.color_dialog(1)
+            return
+        # I -> neues Bild an Mausposition
+        elif event.key() == Qt.Key.Key_I:
+            view = self.views()[0]
+            mouse_pos = view.mapFromGlobal(QCursor.pos())
+            pos = view.mapToScene(mouse_pos)
+
+            self.add_image(pos.x(), pos.y())
+            return
+        # Shift + L -> gerichtete Kante zwischen zwei ausgewählten Nodes erstellen
+        elif event.key() == Qt.Key.Key_L and event.modifiers() & Qt.KeyboardModifier.ShiftModifier:
+            self.edge_create_dialog(True)
             return
         #L -> Kante zwischen zwei ausgewählten Nodes erstellen
         elif event.key() == Qt.Key.Key_L:
-            selected = [i for i in self.selectedItems() if isinstance(i, NodeItem)]
-            if len(selected) == 2:
-                edge = EdgeItem(selected[0], selected[1])
-                if self.controller:
-                    self.controller.add_node(self, edge)
-                return
+            self.edge_create_dialog(False)
+            return
+        
+        # Esc -> Auswahl aufheben
+        elif event.key() == Qt.Key.Key_Escape:
+            self.creating_edge = 0
+            self.edge_nodes = [None, None]
+            self.win.status.setText("idle")
+            self.clearSelection()
+            return
         #Entf -> ausgewählte Items löschen
         elif event.key() == Qt.Key.Key_Delete:
             self.delete()
@@ -173,6 +214,27 @@ class DiagramScene(QGraphicsScene):
                 self.old_pos_list.append(i.pos())
                 self.itemlist.append(i)
         super().mousePressEvent(event)
+        if self.creating_edge == 1:
+            self.edge_nodes[0] = self.itemAt(event.scenePos(), QTransform())
+            if self.edge_nodes[0] and (isinstance(self.edge_nodes[0], NodeItem) or isinstance(self.edge_nodes[0].parentItem(), NodeItem)):
+                self.win.status.setText("Select second node")
+                self.creating_edge = 2
+        elif self.creating_edge == 2:
+            self.edge_nodes[1] = self.itemAt(event.scenePos(), QTransform())
+            if self.edge_nodes[1] and (isinstance(self.edge_nodes[1], NodeItem) or isinstance(self.edge_nodes[1].parentItem(), NodeItem)) and self.edge_nodes[0] != self.edge_nodes[1]:
+                if not isinstance(self.edge_nodes[0], NodeItem):
+                    self.edge_nodes[0] = self.edge_nodes[0].parentItem()
+                if not isinstance(self.edge_nodes[1], NodeItem):
+                    self.edge_nodes[1] = self.edge_nodes[1].parentItem()
+                if self.directed_edge_mode:
+                    edge = DirectedEdgeItem(self.edge_nodes[0], self.edge_nodes[1], self.current_color_edge)
+                else:
+                    edge = EdgeItem(self.edge_nodes[0], self.edge_nodes[1], self.current_color_edge)
+                self.controller.add_node(self, edge)
+            self.directed_edge_mode = False
+            self.creating_edge = 0
+            self.edge_nodes = [None, None]
+            self.win.status.setText("idle")
     
     def mouseReleaseEvent(self, event):
         super().mouseReleaseEvent(event)
@@ -229,7 +291,8 @@ class DiagramScene(QGraphicsScene):
                     "start": item.start_node.id,
                     "end": item.end_node.id,
                     "color": item.colour,
-                    "width": item.p_width
+                    "width": item.p_width,
+                    "directed": item.directed
                 })
         import json
         with open(filename, "w") as f:
@@ -275,7 +338,10 @@ class DiagramScene(QGraphicsScene):
             end = id_map[e["end"]]
             color = QColor(e["color"][0], e["color"][1], e["color"][2])
             width = e["width"]
-            edge = EdgeItem(start, end, color, width)
+            if e["directed"] == True:
+                edge = DirectedEdgeItem(start, end, color, width)
+            else:
+                edge = EdgeItem(start, end, color, width)
             if self.controller:
                 self.controller.add_node(self, edge)
     
@@ -283,9 +349,13 @@ class DiagramScene(QGraphicsScene):
         import json
         with open("editor/recent_files.json", "r") as f:
             recent_files = json.load(f)
-        
+        last_folder = os.path.basename(os.path.dirname(filename))
+        fname = os.path.basename(filename)
+        folder_name = os.path.join(last_folder, fname)
         if filename in recent_files:
             recent_files.remove(filename)
+        elif folder_name in recent_files:
+            recent_files.remove(folder_name)
         recent_files.insert(0, filename)
         recent_files = recent_files[:5]
 
@@ -300,13 +370,12 @@ class DiagramScene(QGraphicsScene):
             elif isinstance(i, EdgeItem):
                 dist = i.laenge()
                 g[i.start_node].append((i.end_node, dist))
-                g[i.end_node].append((i.start_node, dist))
+                if not getattr(i, 'directed', False):
+                    g[i.end_node].append((i.start_node, dist))
         return g
     
     def show_distance(self, text):
-        for v in self.views():
-            win = v.window()
-            win.dist_label.setText(text)
+        self.win.dist_label.setText(text)
     
     def compute_shortest(self, a, b):
         g = self.weighted_graph()

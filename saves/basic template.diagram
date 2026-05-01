@@ -2,9 +2,9 @@
     "nodes": [
         {
             "id": 5,
-            "type": "rect",
-            "x": 1879.0,
-            "y": 1602.0,
+            "type": "image",
+            "x": 655.0,
+            "y": 444.0,
             "width": 80.0,
             "height": 80.0,
             "color": [
@@ -13,13 +13,15 @@
                 255
             ],
             "text": "",
-            "custom_param": []
+            "custom_param": [
+                "editor\\resources\\icons\\add_image.png"
+            ]
         },
         {
             "id": 4,
-            "type": "rect",
-            "x": 1881.0,
-            "y": 1394.0,
+            "type": "image",
+            "x": 651.0,
+            "y": 168.0,
             "width": 80.0,
             "height": 80.0,
             "color": [
@@ -28,13 +30,15 @@
                 255
             ],
             "text": "",
-            "custom_param": []
+            "custom_param": [
+                "editor\\resources\\icons\\add_image.png"
+            ]
         },
         {
             "id": 3,
-            "type": "ellipse",
-            "x": 1554.0,
-            "y": 1605.0,
+            "type": "rect",
+            "x": 489.0,
+            "y": 454.0,
             "width": 80.0,
             "height": 80.0,
             "color": [
@@ -47,9 +51,9 @@
         },
         {
             "id": 2,
-            "type": "ellipse",
-            "x": 1557.0,
-            "y": 1387.0,
+            "type": "rect",
+            "x": 487.0,
+            "y": 167.0,
             "width": 80.0,
             "height": 80.0,
             "color": [
@@ -62,9 +66,9 @@
         },
         {
             "id": 1,
-            "type": "image",
-            "x": 1285.0,
-            "y": 1603.0,
+            "type": "ellipse",
+            "x": 308.0,
+            "y": 453.0,
             "width": 80.0,
             "height": 80.0,
             "color": [
@@ -73,15 +77,13 @@
                 255
             ],
             "text": "",
-            "custom_param": [
-                "editor\\resources\\icons\\add_image.png"
-            ]
+            "custom_param": []
         },
         {
             "id": 0,
-            "type": "image",
-            "x": 1287.0,
-            "y": 1387.0,
+            "type": "ellipse",
+            "x": 308.0,
+            "y": 170.0,
             "width": 80.0,
             "height": 80.0,
             "color": [
@@ -90,21 +92,20 @@
                 255
             ],
             "text": "",
-            "custom_param": [
-                "editor\\resources\\icons\\add_image.png"
-            ]
+            "custom_param": []
         }
     ],
     "edges": [
         {
-            "start": 4,
-            "end": 5,
+            "start": 5,
+            "end": 4,
             "color": [
                 255,
                 255,
                 255
             ],
-            "width": 12
+            "width": 6,
+            "directed": false
         },
         {
             "start": 2,
@@ -114,17 +115,19 @@
                 255,
                 255
             ],
-            "width": 12
+            "width": 6,
+            "directed": false
         },
         {
-            "start": 1,
-            "end": 0,
+            "start": 0,
+            "end": 1,
             "color": [
                 255,
                 255,
                 255
             ],
-            "width": 12
+            "width": 6,
+            "directed": true
         }
     ]
 }

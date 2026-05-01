@@ -4,7 +4,7 @@ from pathlib import Path
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtGui import QColor
 from editor.core.scene import DiagramScene
-from editor.core.view import DiagramView
+from editor.ui.view import DiagramView
 from editor.items.node import NodeEllipse, NodeRect
 from editor.items.edge import EdgeItem
 

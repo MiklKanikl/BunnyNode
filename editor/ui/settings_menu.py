@@ -74,5 +74,4 @@ class Settings_menu(QWidget):
         self.parent.view.update_settings_stats()
     
     def reset_settings(self):
-        self.zoom_speed_spin.setValue(5)
-        self.zoom_spin.setValue(100)
+        pass

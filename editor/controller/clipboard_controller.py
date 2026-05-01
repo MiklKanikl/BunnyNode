@@ -5,6 +5,7 @@ from editor.items.node import NodeItem
 from editor.items.rectangle import NodeRect
 from editor.items.ellipse import NodeEllipse
 from editor.items.edge import EdgeItem
+from editor.items.directed_edge import DirectedEdgeItem
 
 class ClipboardController:
     def __init__(self):
@@ -41,7 +42,8 @@ class ClipboardController:
                     "start": item.start_node.id,
                     "end": item.end_node.id,
                     "color": item.colour,
-                    "width": item.p_width
+                    "width": item.p_width,
+                    "directed": item.directed
                 })
     def paste(self):
         if not self.clipboard_data:
@@ -84,10 +86,17 @@ class ClipboardController:
             start_node = id_map.get(data["start"])
             end_node = id_map.get(data["end"])
             if start_node and end_node:
-                edge = EdgeItem(
+                if data["directed"] == True:
+                    edge = DirectedEdgeItem(
                     start_node, end_node,
                     QColor(data["color"][0], data["color"][1], data["color"][2]),
                     data["width"]
                 )
+                else:
+                    edge = EdgeItem(
+                        start_node, end_node,
+                        QColor(data["color"][0], data["color"][1], data["color"][2]),
+                        data["width"]
+                    )
                 items.append(edge)
         return items

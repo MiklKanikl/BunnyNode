@@ -129,3 +129,7 @@ class WelcomeScreen(QWidget):
 
         for file in recent_files:
             self.recent_widget.addItem(file)
+    
+    def reload_recent_files(self):
+        self.recent_widget.clear()
+        self.load_recent_files()
