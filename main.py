@@ -4,6 +4,7 @@ from editor.ui.view import DiagramView
 from editor.core.main_window import EditorWindow
 
 import sys
+import os, sys
 
 def main():
     app = QApplication(sys.argv)
@@ -21,4 +22,5 @@ def main():
     sys.exit(app.exec())
 
 if __name__ == "__main__":
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
     main()
