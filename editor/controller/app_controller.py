@@ -10,14 +10,12 @@ from editor.commands.resize_node import ResizeNodeCommand
 from editor.commands.resize_edge import ResizeEdgeCommand
 from editor.commands.paste_command import PasteCommand
 from editor.controller.clipboard_controller import ClipboardController
-from editor.client.client import Client
 
 class AppController:
     def __init__(self):
         self.scene = None
         self.undostack = QUndoStack()
         self.clipboard = ClipboardController()
-        self.client = Client()
     
     def set_scene(self, scene):
         self.scene = scene

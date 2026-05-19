@@ -27,7 +27,7 @@ class EditorWindow(QMainWindow):
         self.create_calc_show_panel()
         self.hide_bars()
         self.online = False
-        self.client = Client()
+        self.client = Client(self)
     
     def build_statusbar(self):
         self.setStatusBar(QStatusBar(self))
@@ -152,6 +152,7 @@ class EditorWindow(QMainWindow):
         self.online = False
         self.token = None
         self.welcome_screen.reload_recent_files()
+        self.client.stop_timer()
     
     def open_settings(self):
         self.stacked_widget.setCurrentWidget(self.settings_menu)
@@ -174,6 +175,7 @@ class EditorWindow(QMainWindow):
             self.view.scene().clear()
             self.stacked_widget.setCurrentWidget(self.view)
             self.show_bars()
+            self.client.start_timer()
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to create collaboration room: {str(e)}")
     
@@ -187,6 +189,7 @@ class EditorWindow(QMainWindow):
                 self.view.scene().load_scene(online=self.online, data=data)
                 self.stacked_widget.setCurrentWidget(self.view)
                 self.show_bars()
+                self.client.start_timer()
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to join room: {str(e)}")
 
