@@ -1,10 +1,11 @@
-from PyQt6.QtWidgets import QDockWidget, QListWidget, QMainWindow, QMessageBox, QStatusBar, QLabel, QStackedWidget, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QDockWidget, QInputDialog, QListWidget, QMainWindow, QMessageBox, QStatusBar, QLabel, QStackedWidget, QVBoxLayout, QWidget
 from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtCore import Qt
 from editor.resources import icon
 from editor.ui.welcomescreen import WelcomeScreen
 from editor.ui.settings_menu import Settings_menu
 from editor.controller.app_controller import AppController
+from editor.client.client import Client
 
 class EditorWindow(QMainWindow):
     def __init__(self, view):
@@ -25,6 +26,8 @@ class EditorWindow(QMainWindow):
         self.build_statusbar()
         self.create_calc_show_panel()
         self.hide_bars()
+        self.online = False
+        self.client = Client()
     
     def build_statusbar(self):
         self.setStatusBar(QStatusBar(self))
@@ -38,6 +41,7 @@ class EditorWindow(QMainWindow):
         redo_action = self.controller.undostack.createRedoAction(
             self, "Redo"
         )
+        show_token_action = QAction("Show Token", self)
         undo_action.setIcon(QIcon(icon("undo.png")))
         redo_action.setIcon(QIcon(icon("redo.png")))
         undo_action.setShortcut("Ctrl+Z")
@@ -45,6 +49,8 @@ class EditorWindow(QMainWindow):
         self.toolbar = self.addToolBar("Edit")
         self.toolbar.addAction(undo_action)
         self.toolbar.addAction(redo_action)
+        self.toolbar.addAction(show_token_action)
+        show_token_action.triggered.connect(self.show_token)
     
     def build_menubar(self):
         self.menu = self.menuBar()
@@ -143,6 +149,8 @@ class EditorWindow(QMainWindow):
         self.view.scene().controller.clear_history()
         self.stacked_widget.setCurrentWidget(self.welcome_screen)
         self.hide_bars()
+        self.online = False
+        self.token = None
         self.welcome_screen.reload_recent_files()
     
     def open_settings(self):
@@ -150,7 +158,6 @@ class EditorWindow(QMainWindow):
         self.hide_bars()
     
     def new_diagram(self):
-        self.view.scene().controller.clear_history()
         self.view.scene().clear()
         self.stacked_widget.setCurrentWidget(self.view)
         self.show_bars()
@@ -160,6 +167,29 @@ class EditorWindow(QMainWindow):
         self.view.load_a_diagram(False)
         self.show_bars()
     
+    def create_collaboration(self):
+        try:
+            self.token = self.client.create_token()
+            self.online = True
+            self.view.scene().clear()
+            self.stacked_widget.setCurrentWidget(self.view)
+            self.show_bars()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to create collaboration room: {str(e)}")
+    
+    def join_collaboration(self):
+        token, ok = QInputDialog.getInt(self, "Join Collaboration", "Enter Room Token:")
+        if ok and token:
+            try:
+                data = self.client.pull_scene(token)
+                self.token = token
+                self.online = True
+                self.view.scene().load_scene(online=self.online, data=data)
+                self.stacked_widget.setCurrentWidget(self.view)
+                self.show_bars()
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to join room: {str(e)}")
+
     def open_recent_file(self, filename):
         self.stacked_widget.setCurrentWidget(self.view)
         self.view.scene().load_scene(filename)
@@ -178,6 +208,13 @@ class EditorWindow(QMainWindow):
         self.menu.hide()
         self.toolbar.hide()
         self.statusBar().hide()
+    
+    def show_token(self):
+        if self.online:
+            t = str(self.token)
+        else:
+            t = "no token, not in online mode"
+        QMessageBox.information(self, "Room Token", f"Current Room Token:\n{t}")
 
 class MyDockWidget(QDockWidget):
     def closeEvent(self, event):

@@ -1,3 +1,4 @@
+from PyQt6.QtWidgets import QMessageBox
 from PyQt6.QtGui import QUndoStack
 from editor.commands.add_node import AddNodeCommand
 from editor.commands.delete_node import DeleteNodeCommand
@@ -9,11 +10,18 @@ from editor.commands.resize_node import ResizeNodeCommand
 from editor.commands.resize_edge import ResizeEdgeCommand
 from editor.commands.paste_command import PasteCommand
 from editor.controller.clipboard_controller import ClipboardController
+from editor.client.client import Client
 
 class AppController:
     def __init__(self):
+        self.scene = None
         self.undostack = QUndoStack()
         self.clipboard = ClipboardController()
+        self.client = Client()
+    
+    def set_scene(self, scene):
+        self.scene = scene
+        self.win = self.scene.views()[0].window()
     
     def get_current_settings(self):
         import json
@@ -23,39 +31,52 @@ class AppController:
     
     def add_node(self, scene, node):
         cmd = AddNodeCommand(scene, node)
-        self.undostack.push(cmd)
+        self.push_command(cmd)
     
     def delete_node(self, scene, itemlist):
         cmd = DeleteNodeCommand(scene, itemlist)
-        self.undostack.push(cmd)
+        self.push_command(cmd)
     
     def move_node(self, node, old_pos, new_pos):
         cmd = MoveNodeCommand(node, old_pos, new_pos)
-        self.undostack.push(cmd)
+        self.push_command(cmd)
     
     def rename_node(self, node, old_text, new_text):
         cmd = RenameNodeCommand(node, old_text, new_text)
-        self.undostack.push(cmd)
+        self.push_command(cmd)
     
     def change_color(self, item, old_color, new_color):
         cmd = ChangeColorCommand(item, old_color, new_color)
-        self.undostack.push(cmd)
+        self.push_command(cmd)
     
     def resize_node(self, node, old_width, old_height, new_width, new_height):
         cmd = ResizeNodeCommand(node, old_width, old_height, new_width, new_height)
-        self.undostack.push(cmd)
+        self.push_command(cmd)
     
     def resize_edge(self, edge, old_width, new_width):
         cmd = ResizeEdgeCommand(edge, old_width, new_width)
-        self.undostack.push(cmd)
+        self.push_command(cmd)
     
     def paste(self, scene):
         cmd = PasteCommand(scene)
-        self.undostack.push(cmd)
+        self.push_command(cmd)
     
     def load_image(self, node, old_width, old_height, old_img_path, new_img_path):
         cmd = LoadImageCommand(node, old_width, old_height, old_img_path, new_img_path)
-        self.undostack.push(cmd)
+        self.push_command(cmd)
     
     def clear_history(self):
         self.undostack.clear()
+    
+    def push_command(self, cmd):
+        if self.win.online:
+            try:
+                self.undostack.push(cmd)
+                data =self.scene.save_scene(online=True)
+                self.win.client.commit_scene(self.win.token, data)
+            except Exception as e:
+                QMessageBox.critical(self.win, "Error", f"Failed to sync with server: {str(e)}")
+                self.clear_history()
+                self.scene.clear()
+        else:
+            self.undostack.push(cmd)

@@ -1,6 +1,7 @@
 from PyQt6.QtWidgets import QFrame, QGraphicsDropShadowEffect, QHBoxLayout, QWidget, QVBoxLayout, QLabel, QPushButton, QGridLayout, QListWidget
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
+from editor.client.client import Client
 
 class WelcomeScreen(QWidget):
     """Welcome Screen with quick access to common actions and recent files"""
@@ -46,7 +47,23 @@ class WelcomeScreen(QWidget):
             self.open_diagram
         )
         grid.addWidget(open_card, 0, 1)
-        
+
+        colab_card = self.create_action_card(
+            "🏠",
+            "Create Colab room",
+            "create a room for team collaboration",
+            self.create_room
+        )
+        grid.addWidget(colab_card, 1, 0)
+
+        colab_join_card = self.create_action_card(
+            "🤝",
+            "Join Colab room",
+            "join an existing collaboration room",
+            self.join_room
+        )
+        grid.addWidget(colab_join_card, 1, 1)
+
         layout.addLayout(grid)
         
         layout.addSpacing(100)
@@ -112,15 +129,18 @@ class WelcomeScreen(QWidget):
     
     def new_diagram(self):
         self.parent.new_diagram()
-        self.hide()
     
     def open_diagram(self):
         self.parent.open_diagram()
-        self.hide()
+    
+    def create_room(self):
+        self.parent.create_collaboration()
+    
+    def join_room(self):
+        self.parent.join_collaboration()
     
     def open_recent(self, item):
         self.parent.open_recent_file(item.text())
-        self.hide()
     
     def load_recent_files(self):
         import json

@@ -26,6 +26,7 @@ class DiagramScene(QGraphicsScene):
     
     def set_services(self, controller):
         self.controller = controller
+        self.controller.set_scene(self)
         self.win = self.views()[0].window()
     
     def export_png(self, path: str):
@@ -259,7 +260,7 @@ class DiagramScene(QGraphicsScene):
                 itemlist.append(item)
         self.controller.delete_node(self, itemlist)
 
-    def save_scene(self, filename):
+    def save_scene(self, online=False, filename=""):
         data = {
             "nodes": [],
             "edges": []
@@ -295,13 +296,17 @@ class DiagramScene(QGraphicsScene):
                     "directed": item.directed
                 })
         import json
-        with open(filename, "w") as f:
-            json.dump(data, f, indent=4)
+        if online:
+            return data
+        else:
+            with open(filename, "w") as f:
+                json.dump(data, f, indent=4)
     
-    def load_scene(self, filename):
+    def load_scene(self, online=False, filename="", data={}):
         import json
-        with open(filename, "r") as f:
-            data = json.load(f)
+        if not online:
+            with open(filename, "r") as f:
+                data = json.load(f)
 
         self.clear()
         id_map = {}

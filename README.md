@@ -19,6 +19,8 @@ Bunnynode is a lightweight, interactive graph editor for building, analysing and
 
 ## Installation
 
+install Python 3.14 or newer
+
 Clone the repository and install dependencies:
 
 pip install -r requirements.txt
@@ -36,6 +38,10 @@ With DEL you can delete all selected items at once. For easier creating of same 
 ### File manipulation
 
 You can save your graph with ctrl+s, load an existing one with ctrl+o or alternatively do these actions via the toolbar. You also can export your graph as a PNG picture via the toolbar.
+
+### Real Time Colab mode
+
+You can now work in real time with another people. You can either create a room and share the access token or you can join the others' room via the token. To access your room token just press 'show token' on the toolbar and a messagebox telling you your token will appear.
 
 ### Other
 
