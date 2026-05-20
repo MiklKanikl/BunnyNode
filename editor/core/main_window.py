@@ -35,12 +35,14 @@ class EditorWindow(QMainWindow):
         self.statusBar().addPermanentWidget(self.status)
 
     def build_toolbar(self):
-        undo_action = self.controller.undostack.createUndoAction(
-            self, "Undo"
-        )
-        redo_action = self.controller.undostack.createRedoAction(
-            self, "Redo"
-        )
+        undo_action = QAction("Undo", self)
+        redo_action = QAction("Redo", self)
+        undo_action.triggered.connect(self.controller.undostack.undo)
+        redo_action.triggered.connect(self.controller.undostack.redo)
+        undo_action.setEnabled(self.controller.undostack.canUndo())
+        redo_action.setEnabled(self.controller.undostack.canRedo())
+        self.controller.undostack.canUndoChanged.connect(undo_action.setEnabled)
+        self.controller.undostack.canRedoChanged.connect(redo_action.setEnabled)
         show_token_action = QAction("Show Token", self)
         undo_action.setIcon(QIcon(icon("undo.png")))
         redo_action.setIcon(QIcon(icon("redo.png")))

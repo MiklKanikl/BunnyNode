@@ -15,8 +15,8 @@ class DiagramScene(QGraphicsScene):
         super().__init__()
         self.setSceneRect(0, 0, 3000, 3000)
         self.current_color = QColor(0, 150, 255)
-        self.current_color_edge = QColor(255, 255, 255)
-        self.setBackgroundBrush(QBrush(QColor(45, 45, 45)))
+        self.current_color_edge = QColor(0, 0, 0)
+        self.setBackgroundBrush(QBrush(QColor(255, 255, 255)))
         self.startnode = None
         self.endnode = None
         self.edge_nodes = [None, None]
