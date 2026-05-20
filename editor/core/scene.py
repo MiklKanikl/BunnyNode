@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QGraphicsScene, QColorDialog, QInputDialog, QFileDialog, QMessageBox, QGraphicsPixmapItem
-from PyQt6.QtGui import QColor, QCursor, QImage, QPainter, QTransform
+from PyQt6.QtGui import QBrush, QColor, QCursor, QImage, QPainter, QTransform
 from PyQt6.QtCore import Qt, QRectF
 from editor.items.node import NodeItem
 from editor.items.rectangle import NodeRect
@@ -16,6 +16,7 @@ class DiagramScene(QGraphicsScene):
         self.setSceneRect(0, 0, 3000, 3000)
         self.current_color = QColor(0, 150, 255)
         self.current_color_edge = QColor(255, 255, 255)
+        self.setBackgroundBrush(QBrush(QColor(45, 45, 45)))
         self.startnode = None
         self.endnode = None
         self.edge_nodes = [None, None]
