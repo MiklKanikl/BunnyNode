@@ -32,7 +32,7 @@ class NodeItem(QGraphicsItem):
 
         self.text = text
         self.label = QGraphicsTextItem(self.text, self)
-        self.label.setDefaultTextColor(QColor("white"))
+        self.label.setDefaultTextColor(QColor("black"))
         self.updateLabelPosition()
         self.custom_init(custom_param)
         self.resize_handle = ResizeHandle(self)
