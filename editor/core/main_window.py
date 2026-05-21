@@ -188,7 +188,11 @@ class EditorWindow(QMainWindow):
                 data = self.client.pull_scene(token)
                 self.token = token
                 self.online = True
-                self.view.scene().load_scene(online=self.online, data=data)
+                scene_data = {
+                    "nodes": data.get("nodes", []),
+                    "edges": data.get("edges", [])
+                }
+                self.view.scene().load_scene(online=self.online, data=scene_data)
                 self.stacked_widget.setCurrentWidget(self.view)
                 self.show_bars()
                 self.client.start_timer()

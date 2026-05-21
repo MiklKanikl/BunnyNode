@@ -8,11 +8,21 @@ class Client(QObject):
         self.win = win
         self.timer = QTimer()
         self.timer.timeout.connect(self.periodic_pull)
+        self.current_version = 0
+        self.server_url = "http://192.168.0.176:5000"
     
     def periodic_pull(self):
         try:
             data = self.pull_scene(self.win.token)
-            self.win.view.scene().load_scene(online=True, data=data)
+            if data:
+                server_version = data.get("version", 0)
+                if server_version != self.current_version:
+                    self.current_version = server_version
+                    scene_data = {
+                        "nodes": data.get("nodes", []),
+                        "edges": data.get("edges", [])
+                    }
+                    self.win.view.scene().load_scene(online=True, data=scene_data)
         except Exception as e:
             self.win.back_to_welcome()
             QMessageBox.critical(self.win, "Error", f"Failed to sync with server: {str(e)}")
@@ -24,22 +34,64 @@ class Client(QObject):
         self.timer.stop()
 
     def create_token(self):
-        request = requests.get("http://192.168.0.176:5000/api/create_token")
-        if request.status_code == 200:
-            return request.text
-        else:
-            raise ConnectionError("Connection to API failed")
+        try:
+            response = requests.get(f"{self.server_url}/api/create_token/")
+            if response.status_code == 200:
+                token = int(response.text)
+                self.current_version = 0
+                return token
+            else:
+                raise ConnectionError("Connection to API failed")
+        except Exception as e:
+            raise ConnectionError(f"Failed to create token: {str(e)}")
 
     def commit_scene(self, key, data):
-        request = requests.post("http://192.168.0.176:5000/api/send_data", json={"key": key, "data": data})
-        if request.status_code != 200:
-            raise ConnectionError("Connection to API failed")
-        
+        try:
+            response = requests.post(
+                f"{self.server_url}/api/send_data/",
+                json={"key": key, "data": data}
+            )
+            if response.status_code == 200:
+                self.current_version += 1
+            else:
+                raise ConnectionError(f"Server error: {response.text}")
+        except Exception as e:
+            raise ConnectionError(f"Failed to commit scene: {str(e)}")
+    
+    def send_delta(self, key, changes, base_version):
+        try:
+            response = requests.post(
+                f"{self.server_url}/api/send_delta/",
+                json={
+                    "key": key,
+                    "base_version": base_version,
+                    "changes": changes
+                }
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                self.current_version = result.get("new_version", 0)
+                return True
+            elif response.status_code == 409:
+                result = response.json()
+                raise ConnectionError(f"Version conflict. Server version: {result.get('server_version')}")
+            else:
+                raise ConnectionError(f"Server error: {response.text}")
+        except Exception as e:
+            raise ConnectionError(f"Failed to send delta: {str(e)}")
+    
     def pull_scene(self, key):
-        request = requests.post("http://192.168.0.176:5000/api/get_data", params={"key": key})
-        if request.status_code == 200:
-            data = request.json()
-        else:
-            raise ConnectionError("Connection to API failed")
-
-        return data
+        try:
+            response = requests.get(
+                f"{self.server_url}/api/get_data/",
+                params={"key": key}
+            )
+            if response.status_code == 200:
+                data = response.json()
+                self.current_version = data.get("version", 0)
+                return data
+            else:
+                raise ConnectionError(f"Server error: {response.text}")
+        except Exception as e:
+            raise ConnectionError(f"Failed to pull scene: {str(e)}")
