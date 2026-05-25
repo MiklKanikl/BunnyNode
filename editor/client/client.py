@@ -16,18 +16,19 @@ class Client(QObject):
             data = self.pull_scene(self.win.token)
             if data:
                 server_version = data.get("version", 0)
-                if server_version != self.current_version:
-                    self.current_version = server_version
-                    scene_data = {
-                        "nodes": data.get("nodes", []),
-                        "edges": data.get("edges", [])
-                    }
-                    self.win.view.scene().load_scene(online=True, data=scene_data)
+                self.current_version = server_version
+                scene_data = {
+                    "nodes": data.get("nodes", []),
+                    "edges": data.get("edges", [])
+                }
+                # Always reload to ensure real-time sync with other devices
+                self.win.view.scene().load_scene(online=True, data=scene_data)
         except Exception as e:
-            self.win.back_to_welcome()
-            QMessageBox.critical(self.win, "Error", f"Failed to sync with server: {str(e)}")
+            print(f"Periodic pull error: {str(e)}")
+            # Don't disconnect on error, just log it
+            pass
 
-    def start_timer(self, intervall=1500):
+    def start_timer(self, intervall=1000):
         self.timer.start(intervall)
 
     def stop_timer(self):
