@@ -1,4 +1,3 @@
-from PyQt6.QtWidgets import QMessageBox
 from PyQt6.QtGui import QUndoStack
 from editor.commands.add_node import AddNodeCommand
 from editor.commands.delete_node import DeleteNodeCommand
@@ -69,8 +68,7 @@ class AppController:
     def push_command(self, cmd):
         if self.win.online:
             try:
-                self.undostack.push(cmd)
-                # Mark changes for auto_sync to handle (don't commit immediately)
+                self.undostack.push(cmd)                
                 self.win.client.pending_changes = True
             except Exception as e:
                 print(f"Sync error: {str(e)}")

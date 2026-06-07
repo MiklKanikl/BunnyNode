@@ -1,4 +1,3 @@
-from PyQt6.QtWidgets import QMessageBox
 from PyQt6.QtCore import QObject, QTimer
 import requests
 import json
@@ -17,7 +16,6 @@ class Client(QObject):
         self.pending_changes = False
     
     def periodic_pull(self):
-        """Pull changes from server every 3 seconds"""
         try:
             data = self.pull_scene(self.win.token)
             if data:
@@ -47,7 +45,6 @@ class Client(QObject):
         self.sync_timer.stop()
     
     def auto_sync(self):
-        """Automatically sync pending changes to server every 1 second"""
         if self.pending_changes and self.win.online:
             try:
                 scene_data = self.win.view.scene().save_scene(online=True)
