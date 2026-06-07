@@ -28,7 +28,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Build executable
-        run: pyinstaller --onefile main.py
+        run: pyinstaller --onefile --add-data "editor/resources;editor/resources" main.py
 
       - name: Upload executable
         uses: actions/upload-artifact@v4
