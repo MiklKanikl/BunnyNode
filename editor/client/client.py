@@ -13,7 +13,7 @@ class Client(QObject):
         self.sync_timer.timeout.connect(self.auto_sync)
         self.current_version = 0
         self.server_url = "http://192.168.0.176:5000"
-        self.last_synced_state = None  # Track last state we sent to server
+        self.last_synced_state = None
         self.pending_changes = False
     
     def periodic_pull(self):
@@ -22,13 +22,11 @@ class Client(QObject):
             data = self.pull_scene(self.win.token)
             if data:
                 server_version = data.get("version", 0)
-                # Check if server state is different from our last known state
                 current_state = json.dumps({
                     "nodes": data.get("nodes", []),
                     "edges": data.get("edges", [])
                 }, sort_keys=True)
                 
-                # Only reload if content actually changed
                 if current_state != self.last_synced_state:
                     self.current_version = server_version
                     self.last_synced_state = current_state
@@ -41,8 +39,8 @@ class Client(QObject):
             print(f"Periodic pull error: {str(e)}")
 
     def start_timer(self, intervall=1000):
-        self.timer.start(3000)  # Pull every 3 seconds instead of 1
-        self.sync_timer.start(intervall)  # Use provided interval for sync (default 1000)
+        self.timer.start(3000)
+        self.sync_timer.start(intervall)
 
     def stop_timer(self):
         self.timer.stop()
