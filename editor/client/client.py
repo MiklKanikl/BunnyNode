@@ -8,31 +8,49 @@ class Client(QObject):
         self.win = win
         self.timer = QTimer()
         self.timer.timeout.connect(self.periodic_pull)
+        self.sync_timer = QTimer()
+        self.sync_timer.timeout.connect(self.auto_sync)
         self.current_version = 0
         self.server_url = "http://192.168.0.176:5000"
+        self.pending_changes = False
+    
+    def mark_changes(self):
+        self.pending_changes = True
     
     def periodic_pull(self):
         try:
             data = self.pull_scene(self.win.token)
             if data:
                 server_version = data.get("version", 0)
-                self.current_version = server_version
-                scene_data = {
-                    "nodes": data.get("nodes", []),
-                    "edges": data.get("edges", [])
-                }
-                # Always reload to ensure real-time sync with other devices
-                self.win.view.scene().load_scene(online=True, data=scene_data)
+                if server_version > self.current_version:
+                    self.current_version = server_version
+                    scene_data = {
+                        "nodes": data.get("nodes", []),
+                        "edges": data.get("edges", [])
+                    }
+                    self.win.view.scene().load_scene(online=True, data=scene_data)
         except Exception as e:
             print(f"Periodic pull error: {str(e)}")
-            # Don't disconnect on error, just log it
             pass
 
     def start_timer(self, intervall=1000):
         self.timer.start(intervall)
+        self.sync_timer.start(2000)
 
     def stop_timer(self):
         self.timer.stop()
+        self.sync_timer.stop()
+    
+    def auto_sync(self):
+        """Automatically sync pending changes to server"""
+        if self.pending_changes and self.win.online:
+            try:
+                scene_data = self.win.view.scene().save_scene(online=True)
+                if scene_data:
+                    self.commit_scene(self.win.token, scene_data)
+                    self.pending_changes = False
+            except Exception as e:
+                print(f"Auto-sync error: {str(e)}")
 
     def create_token(self):
         try:
@@ -53,7 +71,8 @@ class Client(QObject):
                 json={"key": key, "data": data}
             )
             if response.status_code == 200:
-                self.current_version += 1
+                server_data = self.pull_scene(key)
+                self.current_version = server_data.get("version", 0)
             else:
                 raise ConnectionError(f"Server error: {response.text}")
         except Exception as e:

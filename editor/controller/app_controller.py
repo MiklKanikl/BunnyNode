@@ -70,11 +70,9 @@ class AppController:
         if self.win.online:
             try:
                 self.undostack.push(cmd)
-                data =self.scene.save_scene(online=True)
+                data = self.scene.save_scene(online=True)
                 self.win.client.commit_scene(self.win.token, data)
             except Exception as e:
-                QMessageBox.critical(self.win, "Error", f"Failed to sync with server: {str(e)}")
-                self.clear_history()
-                self.scene.clear()
+                print(f"Sync error: {str(e)}")
         else:
             self.undostack.push(cmd)
