@@ -27,8 +27,12 @@ jobs:
           pip install pyinstaller
           pip install -r requirements.txt
 
-      - name: Build executable
+      - name: Build executable(windows)
+        if: matrix.os == 'windows-latest'
         run: pyinstaller --onefile --add-data "editor/resources;editor/resources" main.py
+      - name: Build executable
+        if: matrix.os != 'windows-latest'
+        run: pyinstaller --onefile --add-data "editor/resources:editor/resources" main.py
 
       - name: Upload executable
         uses: actions/upload-artifact@v4
