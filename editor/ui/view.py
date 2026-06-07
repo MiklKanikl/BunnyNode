@@ -1,6 +1,7 @@
 from PyQt6.QtWidgets import QGraphicsView, QFileDialog
 from PyQt6.QtCore import Qt, QPoint
 from PyQt6.QtGui import QPainter
+from editor.path_utils import get_exports_directory
 import os
 
 class DiagramView(QGraphicsView):
@@ -44,8 +45,7 @@ class DiagramView(QGraphicsView):
             self.scene().load_file_dialog()
     
     def export(self):
-        folder = "exports"
-        os.makedirs(folder, exist_ok=True)
+        folder = get_exports_directory()
         path, _ = QFileDialog.getSaveFileName(
             self,
             "Export as PNG",

@@ -9,6 +9,7 @@ from editor.commands.resize_node import ResizeNodeCommand
 from editor.commands.resize_edge import ResizeEdgeCommand
 from editor.commands.paste_command import PasteCommand
 from editor.controller.clipboard_controller import ClipboardController
+from editor.path_utils import get_settings_path
 
 class AppController:
     def __init__(self):
@@ -22,8 +23,13 @@ class AppController:
     
     def get_current_settings(self):
         import json
-        with open("your_settings.json", "r") as f:
-            settings = json.load(f)
+        import os
+        settings_path = get_settings_path()
+        try:
+            with open(settings_path, "r") as f:
+                settings = json.load(f)
+        except FileNotFoundError:
+            settings = {}
         return settings
     
     def add_node(self, scene, node):

@@ -1,7 +1,7 @@
-from PyQt6.QtWidgets import QFrame, QGraphicsDropShadowEffect, QHBoxLayout, QWidget, QVBoxLayout, QLabel, QPushButton, QGridLayout, QListWidget
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QGridLayout, QListWidget
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor
-from editor.client.client import Client
+from editor.path_utils import get_application_path
+import os
 
 class WelcomeScreen(QWidget):
     """Welcome Screen with quick access to common actions and recent files"""
@@ -144,11 +144,16 @@ class WelcomeScreen(QWidget):
     
     def load_recent_files(self):
         import json
-        with open("editor/recent_files.json", "r") as f:
-            recent_files = json.load(f)
-
-        for file in recent_files:
-            self.recent_widget.addItem(file)
+        app_path = get_application_path()
+        recent_files_path = os.path.join(app_path, "editor", "recent_files.json")
+        
+        try:
+            with open(recent_files_path, "r") as f:
+                recent_files = json.load(f)
+            for file in recent_files:
+                self.recent_widget.addItem(file)
+        except FileNotFoundError:
+            pass
     
     def reload_recent_files(self):
         self.recent_widget.clear()

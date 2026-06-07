@@ -1,5 +1,6 @@
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QSpinBox, QWidget, QVBoxLayout, QPushButton, QLabel
 from PyQt6.QtCore import Qt
+from editor.path_utils import get_settings_path
 
 class Settings_menu(QWidget):
     def __init__(self, parent=None):
@@ -68,7 +69,8 @@ class Settings_menu(QWidget):
     def apply_settings(self):
         settings = {}
         import json
-        with open("your_settings.json", "w") as f:
+        settings_path = get_settings_path()
+        with open(settings_path, "w") as f:
             json.dump(settings, f, indent=4)
         self.parent.view.scene().controller.get_current_settings()
         self.parent.view.update_settings_stats()

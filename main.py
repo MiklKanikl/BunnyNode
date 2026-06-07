@@ -2,11 +2,15 @@ from PyQt6.QtWidgets import QApplication, QGraphicsView
 from editor.core.scene import DiagramScene
 from editor.ui.view import DiagramView
 from editor.core.main_window import EditorWindow
+from editor.path_utils import get_application_path
 
 import sys
-import os, sys
+import os
 
 def main():
+    # Ensure proper working directory for resources
+    app_path = get_application_path()
+    
     app = QApplication(sys.argv)
 
     scene = DiagramScene()
@@ -22,5 +26,7 @@ def main():
     sys.exit(app.exec())
 
 if __name__ == "__main__":
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    # Set working directory to project root when running as script
+    if not getattr(sys, 'frozen', False):
+        os.chdir(os.path.dirname(os.path.abspath(__file__)))
     main()

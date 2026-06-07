@@ -8,6 +8,7 @@ from editor.items.image import ImageNode
 from editor.items.edge import EdgeItem
 from editor.items.directed_edge import DirectedEdgeItem
 from editor.calculations.dijkstra import shortest_path
+from editor.path_utils import get_saves_directory
 import os
 
 class DiagramScene(QGraphicsScene):
@@ -83,8 +84,7 @@ class DiagramScene(QGraphicsScene):
             None, "Save As", "Filename (without extension):", text="diagram"
         )
         if ok and new_text.strip():
-            folder = "saves"
-            os.makedirs(folder, exist_ok=True)
+            folder = get_saves_directory()
             filename = os.path.join(folder, new_text.strip() + ".diagram")
         else:
             return
@@ -92,8 +92,7 @@ class DiagramScene(QGraphicsScene):
         self.update_recent_files(filename)
     
     def load_file_dialog(self):
-        folder = "saves"
-        os.makedirs(folder, exist_ok=True)
+        folder = get_saves_directory()
 
         filename, _ = QFileDialog.getOpenFileName(
             None,
@@ -353,8 +352,20 @@ class DiagramScene(QGraphicsScene):
     
     def update_recent_files(self, filename):
         import json
-        with open("editor/recent_files.json", "r") as f:
-            recent_files = json.load(f)
+        from editor.path_utils import get_data_directory, get_application_path
+        
+        if hasattr(self, 'win') and self.win:
+            app_path = get_application_path()
+        else:
+            app_path = get_application_path()
+        recent_files_path = os.path.join(app_path, "editor", "recent_files.json")
+        
+        try:
+            with open(recent_files_path, "r") as f:
+                recent_files = json.load(f)
+        except FileNotFoundError:
+            recent_files = []
+        
         last_folder = os.path.basename(os.path.dirname(filename))
         fname = os.path.basename(filename)
         folder_name = os.path.join(last_folder, fname)
@@ -365,7 +376,7 @@ class DiagramScene(QGraphicsScene):
         recent_files.insert(0, filename)
         recent_files = recent_files[:5]
 
-        with open("editor/recent_files.json", "w") as f:
+        with open(recent_files_path, "w") as f:
             json.dump(recent_files, f, indent=4)
     
     def weighted_graph(self):
