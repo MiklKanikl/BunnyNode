@@ -70,8 +70,8 @@ class AppController:
         if self.win.online:
             try:
                 self.undostack.push(cmd)
-                data = self.scene.save_scene(online=True)
-                self.win.client.commit_scene(self.win.token, data)
+                # Mark changes for auto_sync to handle (don't commit immediately)
+                self.win.client.pending_changes = True
             except Exception as e:
                 print(f"Sync error: {str(e)}")
         else:
