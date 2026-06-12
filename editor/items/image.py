@@ -1,6 +1,7 @@
 from PyQt6.QtWidgets import QGraphicsPixmapItem, QInputDialog, QMenu, QFileDialog
 from PyQt6.QtGui import QColor, QPen, QAction, QPixmap, QPainter, QImage
 from PyQt6.QtCore import Qt
+from editor.resources import icon
 from editor.items.node import NodeItem
 
 class ImageNode(NodeItem):
@@ -10,7 +11,7 @@ class ImageNode(NodeItem):
         try:
             self.img_file = custom_param[0]
         except IndexError:
-            self.img_file = "editor\\resources\\icons\\add_image.png"
+            self.img_file = icon("add_image.png")
         self.custom_param = [self.img_file]
         self.load_image(self.img_file)
         self.setAcceptDrops(True)
@@ -32,7 +33,7 @@ class ImageNode(NodeItem):
             None,
             "Select Image",
             "",
-            "Image Files (*.png *.jpg)"
+            "Image Files (*.png)"
         )
         if file_path:
             self.img_file = file_path
