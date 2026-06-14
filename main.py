@@ -8,6 +8,7 @@ import sys
 import os
 
 def main():
+    # Ensure proper working directory for resources
     app_path = get_application_path()
     
     app = QApplication(sys.argv)
@@ -25,6 +26,7 @@ def main():
     sys.exit(app.exec())
 
 if __name__ == "__main__":
+    # Set working directory to project root when running as script
     if not getattr(sys, 'frozen', False):
         os.chdir(os.path.dirname(os.path.abspath(__file__)))
     main()
