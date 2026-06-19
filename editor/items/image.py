@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QGraphicsPixmapItem, QInputDialog, QMenu, QFileDialog
 from PyQt6.QtGui import QColor, QPen, QAction, QPixmap, QPainter, QImage
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QByteArray, QBuffer, QIODevice
 from editor.resources import icon
 from editor.items.node import NodeItem
 
@@ -9,12 +9,45 @@ class ImageNode(NodeItem):
     def custom_init(self, custom_param=[]):
         self.image_item = None
         try:
-            self.img_file = custom_param[0]
+            self.img_data = custom_param[0]
         except IndexError:
-            self.img_file = icon("add_image.png")
-        self.custom_param = [self.img_file]
-        self.load_image(self.img_file)
+            self.img_data = icon("add_image.png")
+        if self.img_data.endswith(".png"):
+            custom_param = QPixmap(self.img_data)
+        else:
+            custom_param = self.base64_to_pixmap(self.img_data)
+        self.custom_param = [self.img_data]
+        self.load_image(self.img_data)
         self.setAcceptDrops(True)
+    
+    def pixmap_to_base64(self, pixmap: QPixmap, format: str = "PNG") -> str:
+        if pixmap.isNull():
+            return ""
+        
+        byte_array = QByteArray()
+        buffer = QBuffer(byte_array)
+        buffer.open(QIODevice.OpenModeFlag.WriteOnly)
+        pixmap.save(buffer, format)
+        buffer.close()
+        
+        base64_bytes = byte_array.toBase64()
+        return base64_bytes.data().decode('utf-8')
+    
+    def base64_to_pixmap(self, base64_str: str) -> QPixmap:
+        if not base64_str:
+            return QPixmap()
+        
+        byte_array = QByteArray.fromBase64(base64_str.encode('utf-8'))
+        
+        pixmap = QPixmap()
+        pixmap.loadFromData(byte_array)
+        return pixmap
+
+    def get_current_base64(self):
+        if self.image_item:
+            pixmap = self.image_item.pixmap()
+            return self.pixmap_to_base64(pixmap)
+        return ""
     
     def paint(self, painter, option, widget=None):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
@@ -36,16 +69,19 @@ class ImageNode(NodeItem):
             "Image Files (*.png)"
         )
         if file_path:
-            self.img_file = file_path
-            self.custom_param = [self.img_file]
-            self.scene().controller.load_image(self, self.width, self.height, self.img_file, file_path)
+            self.img_data = file_path
+            self.scene().controller.load_image(self, self.width, self.height, self.img_data, file_path)
     
-    def load_image(self, file_path):
+    def load_image(self, img_data):
         if self.image_item:
             self.scene().removeItem(self.image_item)
             self.image_item = None
         previous_size = (int(self.width), int(self.height))
-        pixmap = QPixmap(file_path)
+        if img_data.endswith(".png"):
+            pixmap = QPixmap(img_data)
+        else:
+            pixmap = self.base64_to_pixmap(img_data)
+        self.custom_param = [self.pixmap_to_base64(pixmap)]
         self.image_item = QGraphicsPixmapItem(pixmap, self)
         self.image_item.setPos(0, 0)
         scaled_pixmap = pixmap.scaled(previous_size[0], previous_size[1], Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
@@ -67,7 +103,10 @@ class ImageNode(NodeItem):
     def reload_image(self):
         if self.image_item:
             previous_size = (int(self.width), int(self.height))
-            pixmap = QPixmap(self.img_file)
+            if self.img_data.endswith(".png"):
+                pixmap = QPixmap(self.img_data)
+            else:
+                pixmap = self.base64_to_pixmap(self.img_data)
             scaled_pixmap = pixmap.scaled(previous_size[0], previous_size[1], Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
             self.image_item.setPixmap(scaled_pixmap)
             self.image_item.update()

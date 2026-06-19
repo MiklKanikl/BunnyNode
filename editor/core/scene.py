@@ -88,7 +88,7 @@ class DiagramScene(QGraphicsScene):
             filename = os.path.join(folder, new_text.strip() + ".diagram")
         else:
             return
-        self.save_scene(filename)
+        self.save_scene(filename=filename)
         self.update_recent_files(filename)
     
     def load_file_dialog(self):
@@ -98,10 +98,10 @@ class DiagramScene(QGraphicsScene):
             None,
             "load",
             folder,                      
-            "Diagram-files (*.diagram *.json)"
+            "Diagram-files (*.diagram)"
         )
         if filename:
-            self.load_scene(filename)
+            self.load_scene(filename=filename)
             self.update_recent_files(filename)
     
     def load_popup(self):

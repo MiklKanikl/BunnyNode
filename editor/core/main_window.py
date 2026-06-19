@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QDockWidget, QInputDialog, QListWidget, QMainWindow, QMessageBox, QStatusBar, QLabel, QStackedWidget, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QDockWidget, QInputDialog, QMainWindow, QMessageBox, QStatusBar, QLabel, QStackedWidget, QVBoxLayout, QWidget
 from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtCore import Qt
 from editor.resources import icon
@@ -201,7 +201,7 @@ class EditorWindow(QMainWindow):
 
     def open_recent_file(self, filename):
         self.stacked_widget.setCurrentWidget(self.view)
-        self.view.scene().load_scene(filename)
+        self.view.scene().load_scene(filename=filename)
         self.view.scene().update_recent_files(filename)
         self.show_bars()
     
