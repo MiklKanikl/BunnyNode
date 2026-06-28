@@ -21,6 +21,8 @@ class NodeItem(QGraphicsItem):
         self.color = QColor(color)
         self.colour = [color.red(), color.green(), color.blue()]
 
+        self.typ = ""
+
         self.setFlags(
             QGraphicsItem.GraphicsItemFlag.ItemIsMovable |
             QGraphicsItem.GraphicsItemFlag.ItemIsSelectable |
@@ -40,6 +42,9 @@ class NodeItem(QGraphicsItem):
     
     def custom_init(self, custom_param):
         pass
+
+    def get_distance_center_border(self, angle):
+        return 0.0
 
     def _update_handle_position(self):
         self.resize_handle.setPos(self.width, self.height)

@@ -1,12 +1,14 @@
 from PyQt6.QtWidgets import QGraphicsPixmapItem, QInputDialog, QMenu, QFileDialog
-from PyQt6.QtGui import QColor, QPen, QAction, QPixmap, QPainter, QImage
+from PyQt6.QtGui import QColor, QPen, QAction, QPixmap, QPainter
 from PyQt6.QtCore import Qt, QByteArray, QBuffer, QIODevice
 from editor.resources import icon
+from editor.calculations.node_dist_calculator import ShapeBorderCalculator
 from editor.items.node import NodeItem
 
 class ImageNode(NodeItem):
     """A node that displays an image."""
     def custom_init(self, custom_param=[]):
+        self.typ = "image"
         self.image_item = None
         try:
             self.img_data = custom_param[0]
@@ -130,6 +132,9 @@ class ImageNode(NodeItem):
     
     def get_aspect_ratio(self):
         return self.width / self.height
+    
+    def get_distance_center_border(self, angle):
+        return ShapeBorderCalculator.rect(self.width, self.height, angle)
     
     def mouseDoubleClickEvent(self, event):
         pass

@@ -16,14 +16,14 @@ class DirectedEdgeItem(EdgeItem):
         dx = end_scene.x() - start_scene.x()
         dy = end_scene.y() - start_scene.y()
         length = math.hypot(dx, dy)
+        angle = math.atan2(dy, dx)
 
         if length == 0:
             return
 
-        end_rect = self.end_node.sceneBoundingRect()
-        node_radius = (min(end_rect.width(), end_rect.height()) / 2) - 5
+        node_dist = self.end_node.get_distance_center_border(angle) - 2.5
 
-        ratio = (length - node_radius) / length
+        ratio = (length - node_dist) / length
         tip_scene = QPointF(
             start_scene.x() + dx * ratio,
             start_scene.y() + dy * ratio

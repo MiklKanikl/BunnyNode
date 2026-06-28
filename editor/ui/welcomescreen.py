@@ -1,11 +1,12 @@
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QGridLayout, QListWidget
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QPixmap
+from editor.resources import icon
 from editor.path_utils import get_application_path
 import os
 
 class WelcomeScreen(QWidget):
     """Welcome Screen with quick access to common actions and recent files"""
-    
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent = parent
@@ -33,7 +34,7 @@ class WelcomeScreen(QWidget):
         grid.setSpacing(20)
         
         new_card = self.create_action_card(
-            "📄", 
+            icon("new_diagram.png"), 
             "New Diagram", 
             "Create a new empty diagram", 
             self.new_diagram
@@ -41,7 +42,7 @@ class WelcomeScreen(QWidget):
         grid.addWidget(new_card, 0, 0)
         
         open_card = self.create_action_card(
-            "📂", 
+            icon("load.png"),
             "Open Diagram", 
             "Load an existing diagram from your files", 
             self.open_diagram
@@ -49,7 +50,7 @@ class WelcomeScreen(QWidget):
         grid.addWidget(open_card, 0, 1)
 
         colab_card = self.create_action_card(
-            "🏠",
+            icon("create_room.png"),
             "Create Colab room",
             "create a room for team collaboration",
             self.create_room
@@ -57,7 +58,7 @@ class WelcomeScreen(QWidget):
         grid.addWidget(colab_card, 1, 0)
 
         colab_join_card = self.create_action_card(
-            "🤝",
+            icon("join_room.png"),
             "Join Colab room",
             "join an existing collaboration room",
             self.join_room
@@ -82,7 +83,7 @@ class WelcomeScreen(QWidget):
         
         self.load_recent_files()
     
-    def create_action_card(self, icon, title, description, callback):
+    def create_action_card(self, iconn, title, description, callback):
         card = QPushButton()
         card.setFixedSize(200, 150)
         card.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -90,8 +91,8 @@ class WelcomeScreen(QWidget):
         layout = QVBoxLayout()
         layout.setContentsMargins(10, 10, 10, 10)
         
-        icon_label = QLabel(icon)
-        icon_label.setStyleSheet("font-size: 48px;")
+        icon_label = QLabel()
+        icon_label.setPixmap(QPixmap(iconn).scaled(48, 48, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
         icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(icon_label)
         

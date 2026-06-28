@@ -8,6 +8,7 @@ from editor.items.image import ImageNode
 from editor.items.edge import EdgeItem
 from editor.items.directed_edge import DirectedEdgeItem
 from editor.calculations.dijkstra import shortest_path
+from editor.items.triangle import NodeTriangle
 from editor.path_utils import get_saves_directory
 import os
 
@@ -69,6 +70,15 @@ class DiagramScene(QGraphicsScene):
         )
         if self.controller:
             self.controller.add_node(self, ellp)
+    
+    def add_triangle(self, x, y):
+        triangle = NodeTriangle(
+            x, y,
+            80, 80,
+            self.current_color
+        )
+        if self.controller:
+            self.controller.add_node(self, triangle)
     
     def add_image(self, x, y):
         image = ImageNode(
@@ -143,6 +153,14 @@ class DiagramScene(QGraphicsScene):
             pos = view.mapToScene(mouse_pos)
 
             self.add_ellipse(pos.x(), pos.y())
+        #T -> neues Dreieck an Mausposition
+        # TODO repair triangle
+        # elif event.key() == Qt.Key.Key_T:
+        #     view = self.views()[0]
+        #     mouse_pos = view.mapFromGlobal(QCursor.pos())
+        #     pos = view.mapToScene(mouse_pos)
+
+        #     self.add_triangle(pos.x(), pos.y())
         #1 -> Farbe ändern
         elif event.key() == Qt.Key.Key_1:
             self.color_dialog(0)
@@ -248,6 +266,7 @@ class DiagramScene(QGraphicsScene):
                 if i != new_pos_list[self.old_pos_list.index(i)]:
                     self.controller.move_node(self.itemlist, self.old_pos_list, new_pos_list)
                     break
+        self.win.inspectordock.update_inspector(self.get_the_selected_item())
     
     def delete(self):
         itemlist = []
@@ -267,16 +286,9 @@ class DiagramScene(QGraphicsScene):
         }
         for item in self.items():
             if isinstance(item, NodeItem):
-                typ_str = ""
-                if isinstance(item, NodeRect):
-                    typ_str = "rect"
-                elif isinstance(item, NodeEllipse):
-                    typ_str = "ellipse"
-                elif isinstance(item, ImageNode):
-                    typ_str = "image"
                 node = {
                     "id": item.id,
-                    "type": typ_str,
+                    "type": item.typ,
                     "x": item.scenePos().x(),
                     "y": item.scenePos().y(),
                     "width": item.width,
@@ -321,6 +333,13 @@ class DiagramScene(QGraphicsScene):
                 )
             elif n["type"] == "ellipse":
                 node = NodeEllipse(
+                    n["x"], n["y"],
+                    n["width"], n["height"],
+                    QColor(n["color"][0], n["color"][1], n["color"][2]),
+                    text=n.get("text", "")
+                )
+            elif n["type"] == "triangle":
+                node = NodeTriangle(
                     n["x"], n["y"],
                     n["width"], n["height"],
                     QColor(n["color"][0], n["color"][1], n["color"][2]),
@@ -374,11 +393,22 @@ class DiagramScene(QGraphicsScene):
         elif folder_name in recent_files:
             recent_files.remove(folder_name)
         recent_files.insert(0, filename)
-        recent_files = recent_files[:5]
+        recent_files = recent_files[:1]
 
         with open(recent_files_path, "w") as f:
             json.dump(recent_files, f, indent=4)
     
+    def get_the_selected_item(self):
+        sel_items = []
+        for item in self.selectedItems():
+            if isinstance(item, NodeItem) or isinstance(item, EdgeItem):
+                sel_items.append(item)
+        
+        if len(sel_items) == 1:
+            return sel_items[0]
+        else:
+            return len(sel_items)
+
     def weighted_graph(self):
         g = {}
         for i in self.items():
@@ -392,7 +422,7 @@ class DiagramScene(QGraphicsScene):
         return g
     
     def show_distance(self, text):
-        self.win.dist_label.setText(text)
+        self.win.calcdock.dist_label.setText(text)
     
     def compute_shortest(self, a, b):
         g = self.weighted_graph()

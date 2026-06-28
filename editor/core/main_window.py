@@ -1,9 +1,11 @@
-from PyQt6.QtWidgets import QDockWidget, QInputDialog, QMainWindow, QMessageBox, QStatusBar, QLabel, QStackedWidget, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QInputDialog, QMainWindow, QMessageBox, QStatusBar, QLabel, QStackedWidget, QVBoxLayout, QWidget
 from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtCore import Qt
 from editor.resources import icon
 from editor.ui.welcomescreen import WelcomeScreen
 from editor.ui.settings_menu import Settings_menu
+from editor.ui.components.inspectordock import InspectorDock
+from editor.ui.components.calcdock import CalcDock
 from editor.controller.app_controller import AppController
 from editor.client.client import Client
 
@@ -24,7 +26,7 @@ class EditorWindow(QMainWindow):
         self.controller = AppController()
         self.build_toolbar()
         self.build_statusbar()
-        self.create_calc_show_panel()
+        self.create_docks()
         self.hide_bars()
         self.online = False
         self.client = Client(self)
@@ -130,21 +132,19 @@ class EditorWindow(QMainWindow):
             elif action == 1:
                 self.back_to_welcome()
     
-    def create_calc_show_panel(self):
-        self.dock = MyDockWidget("Calc results", self)
-        self.dock.setAllowedAreas(
-            Qt.DockWidgetArea.LeftDockWidgetArea |
+    def create_docks(self):
+        self.calcdock = CalcDock("Calc results", self)
+        self.inspectordock = InspectorDock("Inspector", self)
+
+        self.calcdock.setAllowedAreas(
+            Qt.DockWidgetArea.LeftDockWidgetArea
+        )
+        self.inspectordock.setAllowedAreas(
             Qt.DockWidgetArea.RightDockWidgetArea
         )
 
-        panel = QWidget()
-        layout = QVBoxLayout(panel)
-        self.dist_label = QLabel("Waiting for Computation...")
-        layout.addWidget(self.dist_label)
-        layout.addStretch()
-
-        self.dock.setWidget(panel)
-        self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.dock)
+        self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.calcdock)
+        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.inspectordock)
     
     def back_to_welcome(self):
         self.view.scene().clear()
@@ -206,14 +206,16 @@ class EditorWindow(QMainWindow):
         self.show_bars()
     
     def show_bars(self):
-        self.dock.show()
+        self.calcdock.show()
+        self.inspectordock.show()
         self.menu.show()
         self.toolbar.show()
         self.statusBar().show()
     
     def hide_bars(self):
-        self.dist_label.setText("Waiting for Computation...")
-        self.dock.hide()
+        self.calcdock.dist_label.setText("Waiting for Computation...")
+        self.calcdock.hide()
+        self.inspectordock.hide()
         self.menu.hide()
         self.toolbar.hide()
         self.statusBar().hide()
@@ -224,7 +226,3 @@ class EditorWindow(QMainWindow):
         else:
             t = "no token, not in online mode"
         QMessageBox.information(self, "Room Token", f"Current Room Token:\n{t}")
-
-class MyDockWidget(QDockWidget):
-    def closeEvent(self, event):
-        event.ignore()
