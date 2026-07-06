@@ -11,7 +11,7 @@ class Client(QObject):
         self.sync_timer = QTimer()
         self.sync_timer.timeout.connect(self.auto_sync)
         self.current_version = 0
-        self.server_url = "https://bunnynode.farni.ng/"
+        self.server_url = "http://192.168.0.176:5000/"
         #"http://192.168.0.176:5000/" "https://bunnynode.farni.ng/"
         self.last_synced_state = None
         self.pending_changes = False
