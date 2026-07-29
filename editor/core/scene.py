@@ -281,6 +281,7 @@ class DiagramScene(QGraphicsScene):
 
     def save_scene(self, online=False, filename=""):
         data = {
+            "type": "full_state",
             "nodes": [],
             "edges": []
         }
@@ -407,7 +408,7 @@ class DiagramScene(QGraphicsScene):
         if len(sel_items) == 1:
             return sel_items[0]
         else:
-            return len(sel_items)
+            return None
 
     def weighted_graph(self):
         g = {}

@@ -135,7 +135,7 @@ class WelcomeScreen(QWidget):
         self.parent.open_diagram()
     
     def create_room(self):
-        self.parent.create_collaboration()
+        self.parent.create_room()
     
     def join_room(self):
         self.parent.join_collaboration()

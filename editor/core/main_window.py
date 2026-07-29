@@ -29,7 +29,15 @@ class EditorWindow(QMainWindow):
         self.create_docks()
         self.hide_bars()
         self.online = False
-        self.client = Client(self)
+        self.token = None
+        self.client = Client()
+        self.client.connection_ready.connect(self.on_connection_ready)
+        self.client.room_joined.connect(self.on_room_joined)
+        self.client.scene_updated.connect(self.on_scene_updated)
+        self.client.user_joined.connect(self.on_user_joined)
+        self.client.user_left.connect(self.on_user_left)
+        self.client.error_occurred.connect(self.on_error)
+        self.client.start()
     
     def build_statusbar(self):
         self.setStatusBar(QStatusBar(self))
@@ -154,7 +162,7 @@ class EditorWindow(QMainWindow):
         self.online = False
         self.token = None
         self.welcome_screen.reload_recent_files()
-        self.client.stop_timer()
+        self.client.leave_room()
     
     def open_settings(self):
         self.stacked_widget.setCurrentWidget(self.settings_menu)
@@ -170,35 +178,24 @@ class EditorWindow(QMainWindow):
         self.view.load_a_diagram(False)
         self.show_bars()
     
-    def create_collaboration(self):
-        try:
-            self.token = self.client.create_token()
+    def create_room(self):
+        if self.client.create_room():
+            self.token = self.client.room_id
             self.online = True
-            self.view.scene().clear()
             self.stacked_widget.setCurrentWidget(self.view)
             self.show_bars()
-            self.client.start_timer()
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to create collaboration room: {str(e)}")
+            self.status.setText(f"Online: Room {self.token}")
+        else:
+            QMessageBox.critical(self, "Error", "Failed to create room")
     
     def join_collaboration(self):
         token, ok = QInputDialog.getInt(self, "Join Collaboration", "Enter Room Token:")
         if ok and token:
             try:
-                data = self.client.pull_scene(token)
-                self.token = token
-                self.online = True
-                scene_data = {
-                    "nodes": data.get("nodes", []),
-                    "edges": data.get("edges", [])
-                }
-                self.view.scene().load_scene(online=self.online, data=scene_data)
-                self.stacked_widget.setCurrentWidget(self.view)
-                self.show_bars()
-                self.client.start_timer()
+                self.client.join_room(token)
             except Exception as e:
-                QMessageBox.critical(self, "Error", f"Failed to join room: {str(e)}")
-
+                QMessageBox.critical(self, "Error", f"Failed to join room because {str(e)}")
+    
     def open_recent_file(self, filename):
         self.stacked_widget.setCurrentWidget(self.view)
         self.view.scene().load_scene(filename=filename)
@@ -221,8 +218,61 @@ class EditorWindow(QMainWindow):
         self.statusBar().hide()
     
     def show_token(self):
-        if self.online:
+        if self.online and self.token:
             t = str(self.token)
         else:
-            t = "no token, not in online mode"
+            t = "not in online mode"
         QMessageBox.information(self, "Room Token", f"Current Room Token:\n{t}")
+    
+    def on_connection_ready(self, ready):
+        if ready:
+            self.status.setText("Connection ready")
+        else:
+            self.status.setText("Connection lost")
+    
+    def on_room_joined(self, data):
+        self.token = data.get('room')
+        self.online = True
+        version = data.get('version', 0)
+        nodes = data.get('nodes', [])
+        edges = data.get('edges', [])
+        scene_data = {"nodes": nodes, "edges": edges}
+        self.view.scene().load_scene(online=True, data=scene_data)
+        self.stacked_widget.setCurrentWidget(self.view)
+        self.show_bars()
+        self.status.setText(f"Online: Room {self.token} (v{version})")
+    
+    def on_scene_updated(self, data):
+        try:
+            if data["type"] == "full_state":
+                nodes = data.get('nodes', [])
+                edges = data.get('edges', [])
+                version = data.get('version', 0)
+                scene_data = {"nodes": nodes, "edges": edges}
+                self.view.scene().load_scene(online=True, data=scene_data)
+                self.status.setText(f"Online: Room {self.token} (v{version})")
+            else:
+                changes = data.get('changes', {})
+                version = data.get('version', 0)
+                self.view.scene().apply_delta(changes)
+                self.status.setText(f"Online: Room {self.token} (v{version})")
+        except Exception as esd:
+            print(esd)
+    
+    def on_user_joined(self, data):
+        user = data.get('user_info', {}).get('name', 'Unknown')
+        total = data.get('total_clients', 0)
+        self.status.setText(f"User '{user}' joined (Total: {total})")
+    
+    def on_user_left(self, data):
+        user = data.get('user_info', {}).get('name', 'Unknown')
+        self.status.setText(f"User '{user}' left")
+    
+    def on_error(self, error):
+        print(f"Error: {error}")
+        QMessageBox.warning(self, "Collaboration Error", error)
+        self.status.setText("Error occurred")
+    
+    def closeEvent(self, event):
+        self.client.disconnect()
+        event.accept()

@@ -1,21 +1,24 @@
 from PyQt6.QtGui import QUndoCommand
 
 class LoadImageCommand(QUndoCommand):
-    def __init__(self, node, old_width, old_height, old_file_path, file_path):
+    def __init__(self, node, old_width, old_height, old_img_data, new_img_data):
         super().__init__("Load Image")
         self.node = node
-        self.file_path = file_path
-        self.old_file_path = old_file_path
+        self.new_img_data = new_img_data
+        self.old_img_data = old_img_data
         self.old_width = old_width
         self.old_height = old_height
         self.loaded = False
+        print(old_img_data)
+        print(new_img_data)
 
     def redo(self):
         if not self.loaded:
-            self.node.load_image(self.file_path)
+            self.node.load_image(self.new_img_data)
             self.loaded = True
     
     def undo(self):
-        self.node.resize(self.old_height, self.old_width)
-        self.node.load_image(self.old_file_path)
-        self.loaded = False
+        if self.loaded:
+            self.node.resize(self.old_height, self.old_width)
+            self.node.load_image(self.old_img_data)
+            self.loaded = False

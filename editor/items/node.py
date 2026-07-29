@@ -195,3 +195,16 @@ class NodeItem(QGraphicsItem):
         if action == endnode_action:
             scene.endnode = self
             return
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'type': self.typ,
+            'x': self.pos().x(),
+            'y': self.pos().y(),
+            'width': self.width,
+            'height': self.height,
+            'color': [self.color.red(), self.color.green(), self.color.blue()],
+            'text': self.text,
+            'custom_param': self.custom_param
+        }

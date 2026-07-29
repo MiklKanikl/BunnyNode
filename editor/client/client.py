@@ -1,124 +1,187 @@
-from PyQt6.QtCore import QObject, QTimer
-import requests
 import json
+import asyncio
+import threading
+import requests
+import websockets
+from PyQt6.QtCore import pyqtSignal, QObject
 
 class Client(QObject):
-    def __init__(self, win):
-        super().__init__(win)
-        self.win = win
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.periodic_pull)
-        self.sync_timer = QTimer()
-        self.sync_timer.timeout.connect(self.auto_sync)
+    message_received = pyqtSignal(str)
+    connection_ready = pyqtSignal(bool)
+    room_joined = pyqtSignal(dict)
+    scene_updated = pyqtSignal(dict)
+    user_joined = pyqtSignal(dict)
+    user_left = pyqtSignal(dict)
+    error_occurred = pyqtSignal(str)
+    
+    #REST-API: test="http://192.168.0.176:5000", prod="http://bunnynode.farni.ng"
+    #WebSocket: test="ws://192.168.0.176:5000", prod="wss://bunnynode.farni.ng"
+    def __init__(self, server_url="http://192.168.0.176:5000", ws_url="ws://192.168.0.176:8765"):
+        super().__init__()
+        self.server_url = server_url
+        self.ws_url = ws_url
+        self.room_id = None
+        self.session_id = None
+        self.websocket = None
+        self.loop = None
+        self.thread = None
+        self.running = False
         self.current_version = 0
-        self.server_url = "http://192.168.0.176:5000/"
-        #"http://192.168.0.176:5000/" "https://bunnynode.farni.ng/"
-        self.last_synced_state = None
-        self.pending_changes = False
     
-    def periodic_pull(self):
-        try:
-            data = self.pull_scene(self.win.token)
-            if data:
-                server_version = data.get("version", 0)
-                current_state = json.dumps({
-                    "nodes": data.get("nodes", []),
-                    "edges": data.get("edges", [])
-                }, sort_keys=True)
-                
-                if current_state != self.last_synced_state:
-                    self.current_version = server_version
-                    self.last_synced_state = current_state
-                    scene_data = {
-                        "nodes": data.get("nodes", []),
-                        "edges": data.get("edges", [])
-                    }
-                    self.win.view.scene().load_scene(online=True, data=scene_data)
-        except Exception as e:
-            print(f"Periodic pull error: {str(e)}")
-
-    def start_timer(self, intervall=1000):
-        self.timer.start(3000)
-        self.sync_timer.start(intervall)
-
-    def stop_timer(self):
-        self.timer.stop()
-        self.sync_timer.stop()
+    def start(self):
+        if self.thread and self.thread.is_alive():
+            return
+        self.running = True
+        self.thread = threading.Thread(target=self._run, daemon=True)
+        self.thread.start()
     
-    def auto_sync(self):
-        if self.pending_changes and self.win.online:
-            try:
-                scene_data = self.win.view.scene().save_scene(online=True)
-                if scene_data:
-                    self.commit_scene(self.win.token, scene_data)
-                    self.pending_changes = False
-            except Exception as e:
-                print(f"Auto-sync error: {str(e)}")
-
-    def create_token(self):
+    def _run(self):
+        self.loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.loop)
+        self.loop.run_until_complete(self._main())
+    
+    async def _main(self):
+        self.connection_ready.emit(True)
+        while self.running:
+            await asyncio.sleep(0.1)
+    
+    def create_room(self):
         try:
             response = requests.get(f"{self.server_url}/api/create_token/")
-            if response.status_code == 200:
-                token = int(response.text)
-                self.current_version = 0
-                self.last_synced_state = None
-                return token
-            else:
-                raise ConnectionError("Connection to API failed")
-        except Exception as e:
-            raise ConnectionError(f"Failed to create token: {str(e)}")
-
-    def commit_scene(self, key, data):
-        try:
-            response = requests.post(
-                f"{self.server_url}/api/send_data/",
-                json={"key": key, "data": data}
-            )
-            if response.status_code == 200:
-                self.current_version += 1
-                self.last_synced_state = json.dumps({
-                    "nodes": data.get("nodes", []),
-                    "edges": data.get("edges", [])
-                }, sort_keys=True)
-            else:
-                raise ConnectionError(f"Server error: {response.text}")
-        except Exception as e:
-            raise ConnectionError(f"Failed to commit scene: {str(e)}")
-    
-    def send_delta(self, key, changes, base_version):
-        try:
-            response = requests.post(
-                f"{self.server_url}/api/send_delta/",
-                json={
-                    "key": key,
-                    "base_version": base_version,
-                    "changes": changes
-                }
-            )
-            
-            if response.status_code == 200:
-                result = response.json()
-                self.current_version = result.get("new_version", 0)
+            if response.ok:
+                self.room_id = int(response.text)
+                self._connect_websocket()
                 return True
-            elif response.status_code == 409:
-                result = response.json()
-                raise ConnectionError(f"Version conflict. Server version: {result.get('server_version')}")
             else:
-                raise ConnectionError(f"Server error: {response.text}")
+                self.error_occurred.emit(f"Failed to create room: {response.text}")
+                return False
         except Exception as e:
-            raise ConnectionError(f"Failed to send delta: {str(e)}")
+            self.error_occurred.emit(f"Error creating room: {str(e)}")
+            return False
     
-    def pull_scene(self, key):
+    def join_room(self, room_id):
+        self.room_id = room_id
+        self._connect_websocket()
+        self.request_full_state()
+    
+    def _connect_websocket(self):
+        if not self.loop:
+            self.error_occurred.emit("Event loop not initialized")
+            return
+        asyncio.run_coroutine_threadsafe(self._websocket_connect(), self.loop)
+    
+    async def _websocket_connect(self):
+        try:
+            self.websocket = await websockets.connect(self.ws_url)
+            
+            join_msg = {
+                'type': 'join',
+                'room': self.room_id,
+                'user_info': {'name': 'PyQt6 Client'}
+            }
+            await self.websocket.send(json.dumps(join_msg))
+            
+            async for raw_msg in self.websocket:
+                await self._handle_message(raw_msg)
+                
+        except websockets.exceptions.ConnectionClosed as e:
+            self.connection_ready.emit(False)
+        except Exception as e:
+            self.error_occurred.emit(str(e))
+    
+    async def _handle_message(self, raw_msg):
+        try:
+            msg = json.loads(raw_msg)
+            msg_type = msg.get('type')
+            
+            if msg_type == 'joined':
+                self.session_id = msg.get('session_id')
+                self.current_version = msg.get('version', 0)
+                self.room_joined.emit(msg)
+                
+            elif msg_type == 'scene_update':
+                self.current_version = msg.get('version', self.current_version)
+                self.scene_updated.emit(msg)
+                
+            elif msg_type == 'user_joined':
+                self.user_joined.emit(msg)
+                
+            elif msg_type == 'user_left':
+                self.user_left.emit(msg)
+                
+            elif msg_type == 'conflict':
+                self.request_full_state()
+                
+            elif msg_type == 'update_success':
+                self.current_version = msg.get('new_version', self.current_version)
+            
+            elif msg_type == 'error':
+                self.error_occurred.emit(f"ERROR: {msg.get('message', "")}")
+                
+            else:
+                self.message_received.emit(raw_msg)
+                
+        except json.JSONDecodeError:
+            pass
+    
+    def request_full_state(self):
         try:
             response = requests.get(
                 f"{self.server_url}/api/get_data/",
-                params={"key": key}
+                params={"key": self.room_id}
             )
-            if response.status_code == 200:
+            if response.ok:
                 data = response.json()
-                self.current_version = data.get("version", 0)
-                return data
-            else:
-                raise ConnectionError(f"Server error: {response.text}")
+                self.current_version = data.get('version', 0)
         except Exception as e:
-            raise ConnectionError(f"Failed to pull scene: {str(e)}")
+            self.error_occurred.emit(f"Error requesting full state: {str(e)}")
+    
+    def send_changes(self, changes):
+        if self.websocket == None:
+            self.error_occurred.emit("Not connected to WebSocket")
+            return False
+        
+        if self.room_id == None or self.session_id == None:
+            self.error_occurred.emit("Not in a room or session")
+            return False
+        
+        msg = {
+            'type': 'scene_change',
+            'changes': changes,
+            'version': self.current_version
+        }
+        
+        try:
+            asyncio.run_coroutine_threadsafe(
+                self.websocket.send(json.dumps(msg)),
+                self.loop
+            )
+            return True
+        except Exception as e:
+            self.error_occurred.emit(f"Error sending changes: {str(e)}")
+            return False
+    
+    def leave_room(self):
+        if self.websocket:
+            try:
+                asyncio.run_coroutine_threadsafe(
+                    self.websocket.send(json.dumps({'type': 'leave'})),
+                    self.loop
+                )
+            except:
+                pass
+            asyncio.run_coroutine_threadsafe(
+                self.websocket.close(),
+                self.loop
+            )
+            self.websocket = None
+        
+        self.session_id = None
+        self.room_id = None
+        self.current_version = 0
+        
+        if self.thread and self.thread.is_alive():
+            self.thread.join(timeout=1.0)
+    
+    def disconnect(self):
+        self.leave_room()

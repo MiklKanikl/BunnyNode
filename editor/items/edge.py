@@ -104,3 +104,12 @@ class EdgeItem(QGraphicsPathItem):
             )
             if new_width and ok:
                 scene.controller.resize_edge(self, self.p_width, new_width)
+    
+    def to_dict(self):
+        return {
+            'start': self.start_node.id,
+            'end': self.end_node.id,
+            'color': [self.color.red(), self.color.green(), self.color.blue()],
+            'width': self.p_width,
+            'directed': self.directed
+        }
