@@ -9,8 +9,6 @@ class LoadImageCommand(QUndoCommand):
         self.old_width = old_width
         self.old_height = old_height
         self.loaded = False
-        print(old_img_data)
-        print(new_img_data)
 
     def redo(self):
         if not self.loaded:

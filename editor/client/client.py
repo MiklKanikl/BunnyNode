@@ -6,6 +6,8 @@ import websockets
 from PyQt6.QtCore import pyqtSignal, QObject
 
 class Client(QObject):
+    MAX_MESSAGE_LENGTH = 1048576
+
     message_received = pyqtSignal(str)
     connection_ready = pyqtSignal(bool)
     room_joined = pyqtSignal(dict)
@@ -13,6 +15,7 @@ class Client(QObject):
     user_joined = pyqtSignal(dict)
     user_left = pyqtSignal(dict)
     error_occurred = pyqtSignal(str)
+    undo_last_command = pyqtSignal()
     
     #REST-API: test="http://192.168.0.176:5000", prod="http://bunnynode.farni.ng"
     #WebSocket: test="ws://192.168.0.176:5000", prod="wss://bunnynode.farni.ng"
@@ -152,15 +155,19 @@ class Client(QObject):
         }
         
         try:
-            asyncio.run_coroutine_threadsafe(
-                self.websocket.send(json.dumps(msg)),
-                self.loop
-            )
-            return True
+            if len(json.dumps(msg)) < Client.MAX_MESSAGE_LENGTH:
+                asyncio.run_coroutine_threadsafe(
+                    self.websocket.send(json.dumps(msg)),
+                    self.loop
+                )
+                return True
+            else:
+                self.error_occurred.emit(f"Message with {len(json.dumps(msg))} bytes too long. It exceeds the {self.MAX_MESSAGE_LENGTH} bytes limit.")
+                self.undo_last_command.emit()
         except Exception as e:
             self.error_occurred.emit(f"Error sending changes: {str(e)}")
             return False
-    
+
     def leave_room(self):
         if self.websocket:
             try:

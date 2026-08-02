@@ -287,27 +287,10 @@ class DiagramScene(QGraphicsScene):
         }
         for item in self.items():
             if isinstance(item, NodeItem):
-                node = {
-                    "id": item.id,
-                    "type": item.typ,
-                    "x": item.scenePos().x(),
-                    "y": item.scenePos().y(),
-                    "width": item.width,
-                    "height": item.height,
-                    "color": item.colour,
-                    "text": item.text,
-                    "custom_param": item.custom_param
-                }
-                data["nodes"].append(node)
+                data["nodes"].append(item.to_dict())
 
             elif isinstance(item, EdgeItem):
-                data["edges"].append({
-                    "start": item.start_node.id,
-                    "end": item.end_node.id,
-                    "color": item.colour,
-                    "width": item.p_width,
-                    "directed": item.directed
-                })
+                data["edges"].append(item.to_dict())
         import json
         if online:
             return data
@@ -322,53 +305,77 @@ class DiagramScene(QGraphicsScene):
                 data = json.load(f)
 
         self.clear()
-        id_map = {}
+        id_map = {"nodes": {}, "edges": {}}
 
         for n in data["nodes"]:
-            if n["type"] == "rect":
-                node = NodeRect(
-                    n["x"], n["y"],
-                    n["width"], n["height"],
-                    QColor(n["color"][0], n["color"][1], n["color"][2]),
-                    text=n.get("text", "")
-                )
-            elif n["type"] == "ellipse":
-                node = NodeEllipse(
-                    n["x"], n["y"],
-                    n["width"], n["height"],
-                    QColor(n["color"][0], n["color"][1], n["color"][2]),
-                    text=n.get("text", "")
-                )
-            elif n["type"] == "triangle":
-                node = NodeTriangle(
-                    n["x"], n["y"],
-                    n["width"], n["height"],
-                    QColor(n["color"][0], n["color"][1], n["color"][2]),
-                    text=n.get("text", "")
-                )
-            elif n["type"] == "image":
-                node = ImageNode(
-                    n["x"], n["y"],
-                    n["width"], n["height"],
-                    QColor(n["color"][0], n["color"][1], n["color"][2]),
-                    custom_param=n.get("custom_param", [])
-                )
-            node.id = n["id"]
-            id_map[node.id] = node
-            if self.controller:
-                self.controller.add_node(self, node)
+            existing = self.find_node_by_id(n["id"])
+            if not existing:
+                if n["type"] == "rect":
+                    node = NodeRect(
+                        n["x"], n["y"],
+                        n["width"], n["height"],
+                        QColor(n["color"][0], n["color"][1], n["color"][2]),
+                        text=n.get("text", "")
+                    )
+                elif n["type"] == "ellipse":
+                    node = NodeEllipse(
+                        n["x"], n["y"],
+                        n["width"], n["height"],
+                        QColor(n["color"][0], n["color"][1], n["color"][2]),
+                        text=n.get("text", "")
+                    )
+                elif n["type"] == "triangle":
+                    node = NodeTriangle(
+                        n["x"], n["y"],
+                        n["width"], n["height"],
+                        QColor(n["color"][0], n["color"][1], n["color"][2]),
+                        text=n.get("text", "")
+                    )
+                elif n["type"] == "image":
+                    node = ImageNode(
+                        n["x"], n["y"],
+                        n["width"], n["height"],
+                        QColor(n["color"][0], n["color"][1], n["color"][2]),
+                        custom_param=n.get("custom_param", [])
+                    )
+                node.id = n["id"]
+                id_map["nodes"][node.id] = node
+                if self.controller and not online:
+                    self.controller.add_node(self, node)
+                elif online:
+                    self.addItem(node)
+            else:
+                existing.update_from_data(n)
 
         for e in data["edges"]:
-            start = id_map[e["start"]]
-            end = id_map[e["end"]]
-            color = QColor(e["color"][0], e["color"][1], e["color"][2])
-            width = e["width"]
-            if e["directed"] == True:
-                edge = DirectedEdgeItem(start, end, color, width)
-            else:
-                edge = EdgeItem(start, end, color, width)
-            if self.controller:
-                self.controller.add_node(self, edge)
+            existing = self.find_edge_by_id(e["id"])
+            if not existing:
+                start = id_map["nodes"][e["start"]]
+                end = id_map["nodes"][e["end"]]
+                color = QColor(e["color"][0], e["color"][1], e["color"][2])
+                width = e["width"]
+                if e["directed"] == True:
+                    edge = DirectedEdgeItem(start, end, color, width)
+                else:
+                    edge = EdgeItem(start, end, color, width)
+                edge.id = e["id"]
+                id_map["edges"][edge.id] = edge
+                if self.controller and not online:
+                    self.controller.add_node(self, edge)
+                elif online:
+                    self.addItem(edge)
+
+    def find_node_by_id(self, node_id):
+        for item in self.items():
+            if hasattr(item, 'id') and item.id == node_id:
+                return item
+        return None
+
+    def find_edge_by_id(self, edge_id):
+        for item in self.items():
+            if hasattr(item, 'edge_id') and item.edge_id == edge_id:
+                return item
+        return None
     
     def update_recent_files(self, filename):
         import json
@@ -394,7 +401,7 @@ class DiagramScene(QGraphicsScene):
         elif folder_name in recent_files:
             recent_files.remove(folder_name)
         recent_files.insert(0, filename)
-        recent_files = recent_files[:1]
+        recent_files = recent_files[:0]
 
         with open(recent_files_path, "w") as f:
             json.dump(recent_files, f, indent=4)
@@ -404,7 +411,7 @@ class DiagramScene(QGraphicsScene):
         for item in self.selectedItems():
             if isinstance(item, NodeItem) or isinstance(item, EdgeItem):
                 sel_items.append(item)
-        
+
         if len(sel_items) == 1:
             return sel_items[0]
         else:

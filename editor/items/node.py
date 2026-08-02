@@ -120,6 +120,21 @@ class NodeItem(QGraphicsItem):
         self.updateLabelPosition()
         for edge in self.edges:
             edge.update_position()
+
+    def update_from_data(self, data):
+        self.setPos(data.get('x', self.x()), data.get('y', self.y()))
+        if 'width' in data:
+            self.width = data['width']
+        if 'height' in data:
+            self.height = data['height']
+        if 'color' in data:
+            self.apply_color(QColor(data['color'][0], data['color'][1], data['color'][2]))
+        if 'text' in data:
+            self.text = data['text']
+            self.updateLabelPosition()
+        if 'custom_param' in data:
+            self.custom_param = data['custom_param']
+        self.update()
     
     def contextMenuEvent(self, event):
         menu = QMenu()

@@ -55,7 +55,6 @@ class AppController:
             'nodes': [item.to_dict() for item in itemlist if isinstance(item, NodeItem)],
             'edges': [item.to_dict() for item in itemlist if isinstance(item, EdgeItem)]
         }
-        print(self.changes)
         self.push_command(cmd)
     
     def move_node(self, nodelist, old_pos, new_pos):
@@ -119,11 +118,21 @@ class AppController:
     
     def load_image(self, node, old_width, old_height, old_img_path, new_img_path):
         cmd = LoadImageCommand(node, old_width, old_height, old_img_path, new_img_path)
+        nodedata = node.to_dict()
+        nodedata["custom_param"][0] = new_img_path
         self.changes = {
             'type': 'nodes_modified',
-            'nodes': [node.to_dict()]
+            'nodes': [nodedata]
         }
         self.push_command(cmd)
+
+    def undo_action(self):
+        if not self.win.online:
+            self.undostack.undo()
+
+    def redo_action(self):
+        if not self.win.online:
+            self.undostack.redo()
     
     def clear_history(self):
         self.undostack.clear()
@@ -131,7 +140,7 @@ class AppController:
     def push_command(self, cmd):
         if self.win.online:
             try:
-                self.undostack.push(cmd)                
+                self.undostack.push(cmd)
                 self.win.client.send_changes(self.changes)
             except Exception as e:
                 print(f"Sync error: {str(e)}")

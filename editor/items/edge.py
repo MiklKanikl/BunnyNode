@@ -3,8 +3,12 @@ from PyQt6.QtGui import QPainterPath, QPen, QColor
 from PyQt6.QtCore import QTimer
 
 class EdgeItem(QGraphicsPathItem):
+    _id_counter = 0
+
     def __init__(self, start_node, end_node, color=QColor(0, 0, 0), path_width=6, custom_param=[]):
         super().__init__()
+        self.id = EdgeItem._id_counter
+        EdgeItem._id_counter += 1
         self.start_node = start_node
         self.end_node = end_node
         self.directed = False
@@ -107,6 +111,7 @@ class EdgeItem(QGraphicsPathItem):
     
     def to_dict(self):
         return {
+            'id': self.id,
             'start': self.start_node.id,
             'end': self.end_node.id,
             'color': [self.color.red(), self.color.green(), self.color.blue()],

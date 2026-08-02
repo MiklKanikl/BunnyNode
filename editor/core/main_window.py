@@ -37,6 +37,7 @@ class EditorWindow(QMainWindow):
         self.client.user_joined.connect(self.on_user_joined)
         self.client.user_left.connect(self.on_user_left)
         self.client.error_occurred.connect(self.on_error)
+        self.client.undo_last_command.connect(lambda: self.controller.undostack.undo())
         self.client.start()
     
     def build_statusbar(self):
@@ -47,8 +48,8 @@ class EditorWindow(QMainWindow):
     def build_toolbar(self):
         undo_action = QAction("Undo", self)
         redo_action = QAction("Redo", self)
-        undo_action.triggered.connect(self.controller.undostack.undo)
-        redo_action.triggered.connect(self.controller.undostack.redo)
+        undo_action.triggered.connect(self.controller.undo_action)
+        redo_action.triggered.connect(self.controller.redo_action)
         undo_action.setEnabled(self.controller.undostack.canUndo())
         redo_action.setEnabled(self.controller.undostack.canRedo())
         self.controller.undostack.canUndoChanged.connect(undo_action.setEnabled)

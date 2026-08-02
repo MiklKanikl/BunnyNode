@@ -82,9 +82,10 @@ class ImageNode(NodeItem):
         previous_size = (int(self.width), int(self.height))
         pixmap = self.base64_to_pixmap(img_data)
         self.custom_param = [img_data]
+        self.img_data = img_data
         self.image_item = QGraphicsPixmapItem(pixmap, self)
         self.image_item.setPos(0, 0)
-        scaled_pixmap = pixmap.scaled(previous_size[0], previous_size[1], Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+        scaled_pixmap = pixmap.scaled(previous_size[0], previous_size[1], Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
         self.image_item.setPixmap(scaled_pixmap)
         self.image_item.update()
         self.width = scaled_pixmap.size().width()
