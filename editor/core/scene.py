@@ -310,35 +310,7 @@ class DiagramScene(QGraphicsScene):
         for n in data["nodes"]:
             existing = self.find_node_by_id(n["id"])
             if not existing:
-                if n["type"] == "rect":
-                    node = NodeRect(
-                        n["x"], n["y"],
-                        n["width"], n["height"],
-                        QColor(n["color"][0], n["color"][1], n["color"][2]),
-                        text=n.get("text", "")
-                    )
-                elif n["type"] == "ellipse":
-                    node = NodeEllipse(
-                        n["x"], n["y"],
-                        n["width"], n["height"],
-                        QColor(n["color"][0], n["color"][1], n["color"][2]),
-                        text=n.get("text", "")
-                    )
-                elif n["type"] == "triangle":
-                    node = NodeTriangle(
-                        n["x"], n["y"],
-                        n["width"], n["height"],
-                        QColor(n["color"][0], n["color"][1], n["color"][2]),
-                        text=n.get("text", "")
-                    )
-                elif n["type"] == "image":
-                    node = ImageNode(
-                        n["x"], n["y"],
-                        n["width"], n["height"],
-                        QColor(n["color"][0], n["color"][1], n["color"][2]),
-                        custom_param=n.get("custom_param", [])
-                    )
-                node.id = n["id"]
+                node = self.create_node_from_data(n)
                 id_map["nodes"][node.id] = node
                 if self.controller and not online:
                     self.controller.add_node(self, node)
@@ -352,12 +324,7 @@ class DiagramScene(QGraphicsScene):
             if not existing:
                 start = id_map["nodes"][e["start"]]
                 end = id_map["nodes"][e["end"]]
-                color = QColor(e["color"][0], e["color"][1], e["color"][2])
-                width = e["width"]
-                if e["directed"] == True:
-                    edge = DirectedEdgeItem(start, end, color, width)
-                else:
-                    edge = EdgeItem(start, end, color, width)
+                edge = self.create_edge_from_data(e, start, end)
                 edge.id = e["id"]
                 id_map["edges"][edge.id] = edge
                 if self.controller and not online:
@@ -365,10 +332,28 @@ class DiagramScene(QGraphicsScene):
                 elif online:
                     self.addItem(edge)
 
+    def get_id_map(self):
+        id_map = {"nodes": [], "edges": []}
+
+        i = 0
+        for item in self.items():
+            if isinstance(item, NodeItem):
+                id_map["nodes"][i] = item
+                i += 1
+
+        i = 0
+        for item in self.items():
+            if isinstance(item, EdgeItem):
+                id_map["edges"][i] = item
+                i += 1
+        return id_map
+
     def apply_delta(self, changes):
         if changes.get("type") == "nodes_added":
             for node_data in changes.get("nodes", []):
-                self.create_node_from_data(node_data)
+                node = self.create_node_from_data(node_data)
+                if node:
+                    self.controller.add_node(self, node)
         
         elif changes.get("type") == "nodes_modified":
             for node_update in changes.get("nodes", []):
@@ -387,6 +372,7 @@ class DiagramScene(QGraphicsScene):
                     node.update()
         
         elif changes.get("type") == "nodes_and_edges_removed":
+            print(changes)
             for node_id in changes.get("nodes", []):
                 node = self.find_node_by_id(node_id)
                 if node:
@@ -397,8 +383,13 @@ class DiagramScene(QGraphicsScene):
                     self.removeItem(edge)
         
         elif changes.get("type") == "edges_added":
+            id_map = self.get_id_map()
             for edge_data in changes.get("edges", []):
+                edge_data["start"] = id_map["nodes"][edge_data["start"]]
+                edge_data["end"] = id_map["nodes"][edge_data["end"]]
                 self.create_edge_from_data(edge_data)
+                if edge:
+                    self.controller.add_node(self, edge)
         
         elif changes.get("type") == "edges_modified":
             for edge_update in changes.get("edges", []):
@@ -406,14 +397,21 @@ class DiagramScene(QGraphicsScene):
                 edge = self.find_edge_by_id(edge_id)
                 if edge:
                     if 'color' in edge_update:
-                        edge.set_color(QColor(edge_update['color'][0], edge_update['color'][1], edge_update['color'][2]))
+                        edge.apply_color(QColor(edge_update['color'][0], edge_update['color'][1], edge_update['color'][2]))
                     edge.update()
         
         elif changes.get("type") == "nodes_and_edges_added":
             for node_data in changes.get("nodes", []):
-                self.create_node_from_data(node_data)
+                node = self.create_node_from_data(node_data)
+                if node:
+                    self.controller.add_node(self, node)
+            id_map = self.get_id_map()
             for edge_data in changes.get("edges", []):
+                edge_data["start"] = id_map["nodes"][edge_data["start"]]
+                edge_data["end"] = id_map["nodes"][edge_data["end"]]
                 self.create_edge_from_data(edge_data)
+                if edge:
+                    self.controller.add_node(self, edge)
 
     def find_node_by_id(self, node_id):
         for item in self.items():
@@ -426,6 +424,32 @@ class DiagramScene(QGraphicsScene):
             if hasattr(item, 'edge_id') and item.edge_id == edge_id:
                 return item
         return None
+
+    def create_node_from_data(self, data):
+        n_type = data.get('type', 'rect')
+
+        if n_type == 'image':
+            node = ImageNode(data["x"], data["y"], data["width"], data["height"], data["color"], data.get("text", ""), data.get("custom_param", []))
+        elif n_type == 'rect':
+            node = NodeRect(data["x"], data["y"], data["width"], data["height"], data["color"], data.get("text", ""), data.get("custom_param", []))
+        elif n_type == 'ellipse':
+            node = NodeEllipse(data["x"], data["y"], data["width"], data["height"], data["color"], data.get("text", ""), data.get("custom_param", []))
+        elif n_type == 'triangle':
+            node = NodeTriangle(data["x"], data["y"], data["width"], data["height"], data["color"], data.get("text", ""), data.get("custom_param", []))
+        else:
+            return None
+
+        node.id = data["id"]
+        return node
+
+    def create_edge_from_data(self, data, start, end):
+        if data["directed"]:
+            edge = DirectedEdgeItem(start, end, data["color"], data["width"])
+        else:
+            edge = EdgeItem(start, end, data["color"], data["width"])
+
+        edge.id = data["id"]
+        return edge
     
     def update_recent_files(self, filename):
         import json
