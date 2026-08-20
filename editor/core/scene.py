@@ -365,6 +365,56 @@ class DiagramScene(QGraphicsScene):
                 elif online:
                     self.addItem(edge)
 
+    def apply_delta(self, changes):
+        if changes.get("type") == "nodes_added":
+            for node_data in changes.get("nodes", []):
+                self.create_node_from_data(node_data)
+        
+        elif changes.get("type") == "nodes_modified":
+            for node_update in changes.get("nodes", []):
+                node_id = node_update.get("id")
+                node = self.find_node_by_id(node_id)
+                if node:
+                    if 'x' in node_update and 'y' in node_update:
+                        node.setPos(node_update['x'], node_update['y'])
+                    if 'color' in node_update:
+                        node.apply_color(QColor(node_update['color'][0], node_update['color'][1], node_update['color'][2]))
+                    if 'text' in node_update:
+                        node.text = node_update['text']
+                        node.updateLabelPosition()
+                    if 'width' in node_update and 'height' in node_update:
+                        node.resize(node_update['height'], node_update['width'])
+                    node.update()
+        
+        elif changes.get("type") == "nodes_and_edges_removed":
+            for node_id in changes.get("nodes", []):
+                node = self.find_node_by_id(node_id)
+                if node:
+                    self.removeItem(node)
+            for edge_id in changes.get("edges", []):
+                edge = self.find_edge_by_id(edge_id)
+                if edge:
+                    self.removeItem(edge)
+        
+        elif changes.get("type") == "edges_added":
+            for edge_data in changes.get("edges", []):
+                self.create_edge_from_data(edge_data)
+        
+        elif changes.get("type") == "edges_modified":
+            for edge_update in changes.get("edges", []):
+                edge_id = edge_update.get("id")
+                edge = self.find_edge_by_id(edge_id)
+                if edge:
+                    if 'color' in edge_update:
+                        edge.set_color(QColor(edge_update['color'][0], edge_update['color'][1], edge_update['color'][2]))
+                    edge.update()
+        
+        elif changes.get("type") == "nodes_and_edges_added":
+            for node_data in changes.get("nodes", []):
+                self.create_node_from_data(node_data)
+            for edge_data in changes.get("edges", []):
+                self.create_edge_from_data(edge_data)
+
     def find_node_by_id(self, node_id):
         for item in self.items():
             if hasattr(item, 'id') and item.id == node_id:
