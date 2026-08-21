@@ -429,13 +429,13 @@ class DiagramScene(QGraphicsScene):
         n_type = data.get('type', 'rect')
 
         if n_type == 'image':
-            node = ImageNode(data["x"], data["y"], data["width"], data["height"], data["color"], data.get("text", ""), data.get("custom_param", []))
+            node = ImageNode(data["x"], data["y"], data["width"], data["height"], QColor(data["color"][0], data["color"][1], data["color"][2]), data.get("text", ""), data.get("custom_param", []))
         elif n_type == 'rect':
-            node = NodeRect(data["x"], data["y"], data["width"], data["height"], data["color"], data.get("text", ""), data.get("custom_param", []))
+            node = NodeRect(data["x"], data["y"], data["width"], data["height"], QColor(data["color"][0], data["color"][1], data["color"][2]), data.get("text", ""), data.get("custom_param", []))
         elif n_type == 'ellipse':
-            node = NodeEllipse(data["x"], data["y"], data["width"], data["height"], data["color"], data.get("text", ""), data.get("custom_param", []))
+            node = NodeEllipse(data["x"], data["y"], data["width"], data["height"], QColor(data["color"][0], data["color"][1], data["color"][2]), data.get("text", ""), data.get("custom_param", []))
         elif n_type == 'triangle':
-            node = NodeTriangle(data["x"], data["y"], data["width"], data["height"], data["color"], data.get("text", ""), data.get("custom_param", []))
+            node = NodeTriangle(data["x"], data["y"], data["width"], data["height"], QColor(data["color"][0], data["color"][1], data["color"][2]), data.get("text", ""), data.get("custom_param", []))
         else:
             return None
 
@@ -444,9 +444,9 @@ class DiagramScene(QGraphicsScene):
 
     def create_edge_from_data(self, data, start, end):
         if data["directed"]:
-            edge = DirectedEdgeItem(start, end, data["color"], data["width"])
+            edge = DirectedEdgeItem(start, end, QColor(data["color"][0], data["color"][1], data["color"][2]), data["width"])
         else:
-            edge = EdgeItem(start, end, data["color"], data["width"])
+            edge = EdgeItem(start, end, QColor(data["color"][0], data["color"][1], data["color"][2]), data["width"])
 
         edge.id = data["id"]
         return edge
