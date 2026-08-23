@@ -427,11 +427,11 @@ class DiagramScene(QGraphicsScene):
         node.id = data["id"]
         return node
 
-    def create_edge_from_data(self, data, start, end):
+    def create_edge_from_data(self, data):
         if data["directed"]:
-            edge = DirectedEdgeItem(start, end, QColor(data["color"][0], data["color"][1], data["color"][2]), data["width"])
+            edge = DirectedEdgeItem(data["start"], data["end"], QColor(data["color"][0], data["color"][1], data["color"][2]), data["width"])
         else:
-            edge = EdgeItem(start, end, QColor(data["color"][0], data["color"][1], data["color"][2]), data["width"])
+            edge = EdgeItem(data["start"], data["end"], QColor(data["color"][0], data["color"][1], data["color"][2]), data["width"])
 
         edge.id = data["id"]
         return edge
