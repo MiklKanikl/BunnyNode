@@ -356,7 +356,7 @@ class DiagramScene(QGraphicsScene):
                         node.resize(node_update['height'], node_update['width'])
                     if 'custom_param' in node_update:
                         if isinstance(node, ImageNode):
-                            node.load_image(node_update['custom_param'])
+                            node.load_image(node_update['custom_param'][0])
                     node.update()
         
         elif changes.get("type") == "nodes_and_edges_removed":
