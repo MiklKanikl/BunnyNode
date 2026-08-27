@@ -182,10 +182,10 @@ class EditorWindow(QMainWindow):
     def create_room(self):
         if self.client.create_room():
             self.token = self.client.room_id
-            self.online = True
+            self.online = False
             self.stacked_widget.setCurrentWidget(self.view)
             self.show_bars()
-            self.status.setText(f"Online: Room {self.token}")
+            self.status.setText(f"Connecting to room {self.token}...")
         else:
             QMessageBox.critical(self, "Error", "Failed to create room")
     
@@ -227,8 +227,12 @@ class EditorWindow(QMainWindow):
     
     def on_connection_ready(self, ready):
         if ready:
-            self.status.setText("Connection ready")
+            if self.token and not self.online:
+                self.status.setText(f"Connecting to room {self.token}...")
+            else:
+                self.status.setText("Connection ready")
         else:
+            self.online = False
             self.status.setText("Connection lost")
     
     def on_room_joined(self, data):

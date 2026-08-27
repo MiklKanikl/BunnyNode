@@ -93,17 +93,22 @@ class AppController:
     
     def resize_node(self, node, old_width, old_height, new_width, new_height):
         cmd = ResizeNodeCommand(node, old_width, old_height, new_width, new_height)
+        nodedata = node.to_dict()
+        nodedata["width"] = new_width
+        nodedata["height"] = new_height
         self.changes = {
             'type': 'nodes_modified',
-            'nodes': [node.to_dict()]
+            'nodes': [nodedata]
         }
         self.push_command(cmd)
     
     def resize_edge(self, edge, old_width, new_width):
         cmd = ResizeEdgeCommand(edge, old_width, new_width)
+        edgedata = edge.to_dict()
+        edgedata["width"] = new_width
         self.changes = {
             'type': 'edges_modified',
-            'edges': [edge.to_dict()]
+            'edges': [edgedata]
         }
         self.push_command(cmd)
     
