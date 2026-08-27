@@ -354,10 +354,11 @@ class DiagramScene(QGraphicsScene):
                         node.updateLabelPosition()
                     if 'width' in node_update and 'height' in node_update:
                         node.resize(node_update['height'], node_update['width'])
+                    node.update()
                     if 'custom_param' in node_update:
                         if isinstance(node, ImageNode):
                             node.load_image(node_update['custom_param'][0])
-                    node.update()
+                    #node.update()
         
         elif changes.get("type") == "nodes_and_edges_removed":
             for node_id in changes.get("nodes", []):
