@@ -18,7 +18,7 @@ class Client(QObject):
     undo_last_command = pyqtSignal()
     
     #REST-API: test="http://192.168.0.176:5000", prod="http://bunnynode.farni.ng"
-    #WebSocket: test="ws://192.168.0.176:5000", prod="wss://bunnynode.farni.ng"
+    #WebSocket: test="ws://192.168.0.176:8765", prod="wss://bunnynode.farni.ng"
     def __init__(self, server_url="http://192.168.0.176:5000", ws_url="ws://192.168.0.176:8765"):
         super().__init__()
         self.server_url = server_url
