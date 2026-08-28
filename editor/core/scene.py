@@ -322,9 +322,9 @@ class DiagramScene(QGraphicsScene):
         for e in data["edges"]:
             existing = self.find_edge_by_id(e["id"])
             if not existing:
-                start = id_map["nodes"][e["start"]]
-                end = id_map["nodes"][e["end"]]
-                edge = self.create_edge_from_data(e, start, end)
+                e["start"] = id_map["nodes"][e["start"]]
+                e["end"] = id_map["nodes"][e["end"]]
+                edge = self.create_edge_from_data(e)
                 edge.id = e["id"]
                 id_map["edges"][edge.id] = edge
                 if self.controller and not online:
@@ -352,7 +352,7 @@ class DiagramScene(QGraphicsScene):
                     if 'color' in node_update:
                         node.apply_color(QColor(node_update['color'][0], node_update['color'][1], node_update['color'][2]))
                     if 'text' in node_update:
-                        node.update_text(node_update['text'])
+                        node.setPlainText(node_update['text'])
                         node.updateLabelPosition()
                     if 'width' in node_update and 'height' in node_update:
                         node.resize(node_update['height'], node_update['width'])
@@ -376,10 +376,10 @@ class DiagramScene(QGraphicsScene):
         elif changes.get("type") == "edges_added":
             for edge_data in changes.get("edges", []):
                 if self.find_edge_by_id(edge_data["id"]) == None:
-                    start = self.find_node_by_id(edge_data["start"])
-                    end = self.find_node_by_id(edge_data["end"])
-                    if start and end:
-                        edge = self.create_edge_from_data({**edge_data, "start": start, "end": end})
+                    edge_data["start"] = self.find_node_by_id(edge_data["start"])
+                    edge_data["end"] = self.find_node_by_id(edge_data["end"])
+                    if edge_data["start"] and edge_data["end"]:
+                        edge = self.create_edge_from_data(edge_data)
                         self.addItem(edge)
         
         elif changes.get("type") == "edges_modified":
@@ -401,10 +401,10 @@ class DiagramScene(QGraphicsScene):
                         self.addItem(node)
             for edge_data in changes.get("edges", []):
                 if self.find_edge_by_id(edge_data["id"]) == None:
-                    start = self.find_node_by_id(edge_data["start"])
-                    end = self.find_node_by_id(edge_data["end"])
-                    if start and end:
-                        edge = self.create_edge_from_data({**edge_data, "start": start, "end": end})
+                    edge_data["start"] = self.find_node_by_id(edge_data["start"])
+                    edge_data["end"] = self.find_node_by_id(edge_data["end"])
+                    if edge_data["start"] and edge_data["end"]:
+                        edge = self.create_edge_from_data(edge_data)
                         self.addItem(edge)
 
     def find_node_by_id(self, node_id):

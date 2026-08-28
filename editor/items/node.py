@@ -6,6 +6,8 @@ from PyQt6.QtGui import QColor, QBrush, QPen, QAction, QPainterPath
 from PyQt6.QtCore import QRectF, QTimer
 from editor.elements.resize_handle import ResizeHandle
 
+import copy
+
 class NodeItem(QGraphicsItem):
     _id_counter = 0
 
@@ -212,7 +214,7 @@ class NodeItem(QGraphicsItem):
             return
 
     def to_dict(self):
-        return {
+        return copy.deepcopy({
             'id': self.id,
             'type': self.typ,
             'x': self.pos().x(),
@@ -222,4 +224,4 @@ class NodeItem(QGraphicsItem):
             'color': [self.color.red(), self.color.green(), self.color.blue()],
             'text': self.text,
             'custom_param': self.custom_param
-        }
+        })
