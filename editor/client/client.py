@@ -20,7 +20,7 @@ class Client(QObject):
     
     #REST-API: test="http://192.168.0.176:5000", prod="https://bunnynode.farni.ng"
     #WebSocket: test="ws://192.168.0.176:8765", prod="wss://bunnynode.farni.ng"
-    def __init__(self, server_url="http://{sys.argv[1]}:5000" if len(sys.argv) > 1 else "https://bunnynode.farni.ng:5000", ws_url=f"ws://{sys.argv[1]}:8765" if len(sys.argv) > 1 else f"wss://bunnynode.farni.ng:8765"):
+    def __init__(self, server_url=f"http://{sys.argv[1]}:5000" if len(sys.argv) > 1 else "https://bunnynode.farni.ng:5000", ws_url=f"ws://{sys.argv[1]}:8765" if len(sys.argv) > 1 else "wss://bunnynode.farni.ng:8765"):
         super().__init__()
         self.server_url = server_url
         self.ws_url = ws_url
