@@ -4,7 +4,66 @@ import sys
 import threading
 import requests
 import websockets
+from urllib.parse import urlsplit, urlunsplit
 from PyQt6.QtCore import pyqtSignal, QObject
+
+
+def _normalize_server_url(server_url):
+    server_url = server_url.strip()
+    if "://" not in server_url:
+        server_url = f"http://{server_url}"
+
+    parsed_url = urlsplit(server_url)
+    if parsed_url.scheme not in {"http", "https"} or not parsed_url.hostname:
+        raise ValueError("Server URL must use http:// or https://")
+
+    hostname = parsed_url.hostname
+    if hostname.lower() == "localhost":
+        # macOS may resolve localhost to ::1, where AirPlay commonly owns port
+        # 5000, while the local Flask server is bound to 127.0.0.1.
+        hostname = "127.0.0.1"
+    formatted_hostname = f"[{hostname}]" if ":" in hostname else hostname
+    try:
+        port = parsed_url.port
+    except ValueError as error:
+        raise ValueError("Server URL contains an invalid port") from error
+
+    if port is not None:
+        netloc = f"{formatted_hostname}:{port}"
+    elif parsed_url.scheme == "http":
+        netloc = f"{formatted_hostname}:5000"
+    else:
+        netloc = formatted_hostname
+
+    return urlunsplit((
+        parsed_url.scheme,
+        netloc,
+        parsed_url.path.rstrip("/"),
+        "",
+        "",
+    ))
+
+
+def _derive_websocket_url(server_url):
+    parsed_url = urlsplit(server_url)
+    websocket_scheme = {
+        "http": "ws",
+        "https": "wss",
+    }.get(parsed_url.scheme)
+
+    if websocket_scheme is None or not parsed_url.netloc:
+        raise ValueError("Server URL must use http:// or https://")
+
+    base_path = parsed_url.path.rstrip("/")
+    websocket_path = f"{base_path}/ws" if base_path else "/ws"
+    return urlunsplit((
+        websocket_scheme,
+        parsed_url.netloc,
+        websocket_path,
+        "",
+        "",
+    ))
+
 
 class Client(QObject):
     MAX_MESSAGE_LENGTH = 1048576
@@ -18,12 +77,23 @@ class Client(QObject):
     error_occurred = pyqtSignal(str)
     undo_last_command = pyqtSignal()
     
-    #REST-API: test="http://192.168.0.176:5000", prod="https://bunnynode.farni.ng"
-    #WebSocket: test="ws://192.168.0.176:8765", prod="wss://bunnynode.farni.ng"
-    def __init__(self, server_url="http://{sys.argv[1]}:5000" if len(sys.argv) > 1 else "https://bunnynode.farni.ng:5000", ws_url=f"ws://{sys.argv[1]}:8765" if len(sys.argv) > 1 else f"wss://bunnynode.farni.ng:8765"):
+    # REST and WebSocket traffic share the Flask server and port. Flask-Sock
+    # serves WebSocket connections at /ws.
+    def __init__(self, server_url=None, ws_url=None):
         super().__init__()
-        self.server_url = server_url
-        self.ws_url = ws_url
+        if server_url is None:
+            server_url = (
+                sys.argv[1]
+                if len(sys.argv) > 1
+                else "https://bunnynode.farni.ng"
+            )
+
+        self.server_url = _normalize_server_url(server_url)
+        self.ws_url = (
+            ws_url.rstrip("/")
+            if ws_url is not None
+            else _derive_websocket_url(self.server_url)
+        )
         self.room_id = None
         self.session_id = None
         self.websocket = None
@@ -68,7 +138,11 @@ class Client(QObject):
                 self.session_id = None
                 return self._connect_websocket()
             else:
-                self.error_occurred.emit(f"Failed to create room: {response.text}")
+                response_detail = response.text.strip() or response.reason
+                self.error_occurred.emit(
+                    f"Failed to create room: HTTP {response.status_code} "
+                    f"from {response.url}: {response_detail}"
+                )
                 return False
         except Exception as e:
             self.error_occurred.emit(f"Error creating room: {str(e)}")
