@@ -1,4 +1,0 @@
-PyQt6>=6.5
-pytest>=7.0
-requests>=2.32.0
-websockets>=12.0
