@@ -102,6 +102,7 @@ class Client(QObject):
         self._loop_ready = threading.Event()
         self.running = False
         self.current_version = 0
+        self._awaiting_initial_state = False
     
     def start(self):
         if self.thread and self.thread.is_alive():
@@ -136,6 +137,7 @@ class Client(QObject):
             if response.ok:
                 self.room_id = int(response.text.strip())
                 self.session_id = None
+                self._awaiting_initial_state = True
                 return self._connect_websocket()
             else:
                 response_detail = response.text.strip() or response.reason
@@ -143,8 +145,10 @@ class Client(QObject):
                     f"Failed to create room: HTTP {response.status_code} "
                     f"from {response.url}: {response_detail}"
                 )
+                self._awaiting_initial_state = False
                 return False
         except Exception as e:
+            self._awaiting_initial_state = False
             self.error_occurred.emit(f"Error creating room: {str(e)}")
             return False
     
@@ -155,9 +159,10 @@ class Client(QObject):
             self.error_occurred.emit("Invalid room token")
             return False
         self.session_id = None
+        self._awaiting_initial_state = True
         if not self._connect_websocket():
+            self._awaiting_initial_state = False
             return False
-        self.request_full_state()
         return True
     
     def _connect_websocket(self):
@@ -201,38 +206,48 @@ class Client(QObject):
         try:
             msg = json.loads(raw_msg)
             msg_type = msg.get('type')
-            
+
             if msg_type == 'joined':
                 self.session_id = msg.get('session_id')
-                self.current_version = msg.get('version', 0)
-                self.room_joined.emit(msg)
-                
-            elif msg_type == 'scene_update':
                 self.current_version = msg.get('version', self.current_version)
+                self.room_joined.emit(msg)
+                if self._awaiting_initial_state:
+                    self._awaiting_initial_state = False
+                    self.request_full_state()
+
+            elif msg_type == 'scene_update':
+                incoming_version = msg.get('version', self.current_version)
+                if incoming_version < self.current_version:
+                    return
+                self.current_version = incoming_version
                 self.scene_updated.emit(msg)
-                
+
             elif msg_type == 'user_joined':
                 self.user_joined.emit(msg)
-                
+
             elif msg_type == 'user_left':
                 self.user_left.emit(msg)
-                
+
             elif msg_type == 'conflict':
                 await asyncio.get_running_loop().run_in_executor(None, self.request_full_state)
-                
+
             elif msg_type == 'update_success':
-                self.current_version = msg.get('new_version', self.current_version)
-            
+                incoming_version = msg.get('new_version', self.current_version)
+                if incoming_version >= self.current_version:
+                    self.current_version = incoming_version
+
             elif msg_type == 'error':
                 self.error_occurred.emit(f"ERROR: {msg.get('message', '')}")
-                
+
             else:
                 self.message_received.emit(raw_msg)
-                
+
         except (json.JSONDecodeError, TypeError):
             self.error_occurred.emit("Received invalid message from server")
     
     def request_full_state(self):
+        if self.room_id is None:
+            return
         try:
             response = requests.get(
                 f"{self.server_url}/api/get_data/",
@@ -241,7 +256,10 @@ class Client(QObject):
             )
             if response.ok:
                 data = response.json()
-                self.current_version = data.get('version', 0)
+                incoming_version = data.get('version', self.current_version)
+                if incoming_version < self.current_version:
+                    return
+                self.current_version = incoming_version
                 if "nodes" in data and "edges" in data:
                     data["type"] = "full_state"
                     self.scene_updated.emit(data)
@@ -303,10 +321,11 @@ class Client(QObject):
             if self.loop and not self.loop.is_closed():
                 asyncio.run_coroutine_threadsafe(self.websocket.close(), self.loop)
             self.websocket = None
-        
+
         self.session_id = None
         self.room_id = None
         self.current_version = 0
+        self._awaiting_initial_state = False
     
     def disconnect(self):
         self.leave_room()
