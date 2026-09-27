@@ -33,7 +33,7 @@ uv run main.py
 if you want to use a self hosted version:
 
 ```bash
-uv run main.py http://self-hosted-bunnynode/
+uv run main.py http://your-self-hosted-bunnynode/
 ```
 
 ## Exe File
