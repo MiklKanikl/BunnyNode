@@ -1,6 +1,7 @@
 # Bunnynode
 
-Bunnynode is a lightweight, interactive graph editor for building, analysing and exporting graphs.
+Bunnynode is a lightweight, interactive graph edito desktop app for building, analysing and exporting graphs.
+It's written in python using PyQt6
 
 ## Features
 - Node and Edge editing
@@ -12,21 +13,38 @@ Bunnynode is a lightweight, interactive graph editor for building, analysing and
 - Multi selection, zoom & pan
 - custom file format
 
-## Dependencies
-- Python 3.14+
-- PyQt6
-- pytest (for testing)
-
 ## Installation
 
-install Python 3.14 or newer
+install Python 3.12 or newer
+https://www.python.org/downloads/
 
-Clone the repository and install dependencies:
+install uv
+https://docs.astral.sh/uv/getting-started/installation/
 
-pip install -r requirements.txt
+Clone the repository
 
 ## Run
-python main.py
+if you want to use the publicly hosted version:
+
+```bash
+uv run main.py
+```
+
+if you want to use a self hosted version:
+
+```bash
+uv run main.py http://self-hosted-bunnynode/
+```
+
+## Exe File
+you can download the newest BunnyNode.exe file on:
+
+[BunnyNode/releases](https://github.com/MiklKanikl/BunnyNode/releases)
+
+## Backend
+the backend is open-source on:
+
+[BunnyNode-backend](https://github.com/MiklKanikl/BunnyNode-backend)
 
 ## Usage
 
