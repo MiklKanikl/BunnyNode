@@ -62,6 +62,7 @@ class NodeItem(QGraphicsItem):
     def update_text(self, new_text):
         self.scene().controller.rename_node(self, self.text, new_text)
         self.text = new_text
+        self.label.setPlainText(new_text)
         self.updateLabelPosition()
     
     def itemChange(self, change, value):
@@ -133,6 +134,7 @@ class NodeItem(QGraphicsItem):
             self.apply_color(QColor(data['color'][0], data['color'][1], data['color'][2]))
         if 'text' in data:
             self.text = data['text']
+            self.label.setPlainText(self.text)
             self.updateLabelPosition()
         if 'custom_param' in data:
             self.custom_param = data['custom_param']

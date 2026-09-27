@@ -352,7 +352,8 @@ class DiagramScene(QGraphicsScene):
                     if 'color' in node_update:
                         node.apply_color(QColor(node_update['color'][0], node_update['color'][1], node_update['color'][2]))
                     if 'text' in node_update and not isinstance(node, ImageNode):
-                        node.setPlainText(node_update['text'])
+                        node.text = node_update['text']
+                        node.label.setPlainText(node_update['text'])
                         node.updateLabelPosition()
                     if 'width' in node_update and 'height' in node_update:
                         node.resize(node_update['height'], node_update['width'])
