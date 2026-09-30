@@ -17,14 +17,3 @@ def shortest_path(graph, start, end):
                 heapq.heappush(pq, (nd, neigh))
 
     return dist.get(end), prev
-
-def build_path(prev, start, end):
-    p = []
-    n = end
-    while n != start:
-        p.append(n)
-        n = prev.get(n)
-        if n is None:
-            return []
-    p.append(start)
-    return list(reversed(p))

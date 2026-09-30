@@ -58,8 +58,8 @@ class DiagramView(QGraphicsView):
         
         self.scene().export_png(path)
     
-    def compute_distance(self):
-        self.scene().setup_path_compution()
+    def compute_distance(self, unweighted=False):
+        self.scene().setup_path_compution(unweighted=unweighted)
 
     # ZOOM
     def wheelEvent(self, event):

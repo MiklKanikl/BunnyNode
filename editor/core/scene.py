@@ -497,20 +497,34 @@ class DiagramScene(QGraphicsScene):
                 if not getattr(i, 'directed', False):
                     g[i.end_node].append((i.start_node, dist))
         return g
+
+    def unweighted_graph(self):
+        g = {}
+        for i in self.items():
+            if isinstance(i, NodeItem):
+                g[i] = []
+            elif isinstance(i, EdgeItem):
+                g[i.start_node].append([i.end_node, 1])
+                if not getattr(i, 'directed', False):
+                    g[i.end_node].append([i.start_node, 1])
+        return g
     
     def show_distance(self, text):
         self.win.calcdock.dist_label.setText(text)
     
-    def compute_shortest(self, a, b):
-        g = self.weighted_graph()
+    def compute_shortest(self, a, b, unweighted):
+        if unweighted:
+            g = self.unweighted_graph()
+        else:
+            g = self.weighted_graph()
         d, prev = shortest_path(g, a, b)
         if d is None:
             self.show_distance("No path found")
         else:
             self.show_distance(f"Distance: {round(d,2)}")
 
-    def setup_path_compution(self):
+    def setup_path_compution(self, unweighted):
         if self.startnode and self.endnode and self.startnode in self.items() and self.endnode in self.items():
-            self.compute_shortest(self.startnode, self.endnode)
+            self.compute_shortest(self.startnode, self.endnode, unweighted)
         else:
             self.show_distance("No nodes selected")
