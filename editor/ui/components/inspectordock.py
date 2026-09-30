@@ -1,10 +1,10 @@
 from PyQt6.QtWidgets import (
-    QDockWidget, QLabel, QVBoxLayout, QWidget, QGroupBox,
+    QDockWidget, QMainWindow, QLabel, QVBoxLayout, QWidget, QGroupBox,
     QGridLayout, QSpinBox, QLineEdit, QPushButton, QDoubleSpinBox,
     QScrollArea, QColorDialog
 )
 from PyQt6.QtGui import QColor
-from PyQt6.QtCore import QPointF, QTimer
+from PyQt6.QtCore import QPointF, QTimer, Qt
 from editor.items.edge import EdgeItem
 from editor.items.node import NodeItem
 
@@ -17,10 +17,10 @@ class InspectorDock(QDockWidget):
         self.current_item = None
         self.controller = parent.controller
         
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        panel = QWidget()
-        self.main_layout = QVBoxLayout(panel)
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.panel = QWidget()
+        self.main_layout = QVBoxLayout(self.panel)
 
         # info group
         self.info_group = QGroupBox("Item Information")
@@ -128,8 +128,14 @@ class InspectorDock(QDockWidget):
         self.main_layout.addWidget(self.edge_group)
 
         self.main_layout.addStretch()
-        scroll.setWidget(panel)
-        self.setWidget(scroll)
+        self.scroll_area.setWidget(self.panel)
+        self.setWidget(self.scroll_area)
+
+        self.position_group.setVisible(False)
+        self.color_group.setVisible(False)
+        self.size_group.setVisible(False)
+        self.edge_group.setVisible(False)
+        self.text_group.setVisible(False)
     
     def update_inspector(self, item):
         self.current_item = item
@@ -141,6 +147,27 @@ class InspectorDock(QDockWidget):
         self.adapt_to_item(item)
         self._update_common_properties()
         self._update_item_specific_properties()
+        self._schedule_resize()
+
+    def _schedule_resize(self):
+        QTimer.singleShot(0, self._resize_to_contents)
+
+    def _resize_to_contents(self):
+        main_window = self.parentWidget()
+        if not isinstance(main_window, QMainWindow):
+            return
+
+        self.main_layout.activate()
+        dock_chrome_height = self.height() - self.scroll_area.height()
+        dock_chrome_width = self.width() - self.scroll_area.width()
+        content_height = self.panel.sizeHint().height()
+        content_width = self.panel.sizeHint().width()
+        target_height = content_height + self.scroll_area.frameWidth() * 2 + dock_chrome_height
+        target_width = content_width + self.scroll_area.frameWidth() * 2 + dock_chrome_width
+        target_height = min(target_height, main_window.contentsRect().height())
+        target_width = min(target_width, main_window.contentsRect().width())
+        main_window.resizeDocks([self], [target_height], Qt.Orientation.Vertical)
+        main_window.resizeDocks([self], [target_width], Qt.Orientation.Horizontal)
     
     def adapt_to_item(self, item):
         is_edge = isinstance(item, EdgeItem)
@@ -285,8 +312,9 @@ class InspectorDock(QDockWidget):
         self.text_input.blockSignals(False)
         self.edge_width_spin.blockSignals(False)
 
-        self.position_group.setVisible(True)
-        self.color_group.setVisible(True)
-        self.size_group.setVisible(True)
-        self.edge_group.setVisible(True)
-        self.text_group.setVisible(True)
+        self.position_group.setVisible(False)
+        self.color_group.setVisible(False)
+        self.size_group.setVisible(False)
+        self.edge_group.setVisible(False)
+        self.text_group.setVisible(False)
+        self._schedule_resize()
