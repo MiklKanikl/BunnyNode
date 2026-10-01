@@ -5,8 +5,12 @@ from PyQt6.QtWidgets import QApplication
 from PyQt6.QtGui import QColor
 from editor.core.scene import DiagramScene
 from editor.ui.view import DiagramView
-from editor.items.node import NodeEllipse, NodeRect
+from editor.items.node import NodeItem
+from editor.items.rectangle import NodeRect
+from editor.items.ellipse import NodeEllipse
+from editor.items.image import ImageNode
 from editor.items.edge import EdgeItem
+from editor.items.directed_edge import DirectedEdgeItem
 
 @pytest.fixture(scope="session")
 def qapp():
@@ -35,8 +39,10 @@ def view(scene):
 def default_item_pack():
     n1 = NodeRect(300, 300, 140, 70, QColor(255, 0, 0))
     n2 = NodeEllipse(350, 350, 80, 80, QColor(255, 0, 0))
+    n3 = ImageNode(400, 400, 100, 100)
     e1 = EdgeItem(n1, n2)
-    return n1, n2, e1
+    e2 = DirectedEdgeItem(n2, n3)
+    return n1, n2, n3, e1, e2
 
 @pytest.fixture
 def save_dir(tmp_path):
