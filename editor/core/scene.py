@@ -139,21 +139,18 @@ class DiagramScene(QGraphicsScene):
                 self.directed_edge_mode = directed
     
     def keyPressEvent(self, event):
-        #R -> neues Rechteck an Mausposition
         if event.key() == Qt.Key.Key_R:
             view = self.views()[0]
             mouse_pos = view.mapFromGlobal(QCursor.pos())
             pos = view.mapToScene(mouse_pos)
 
             self.add_rect(pos.x(), pos.y())
-        #E -> neuer Kreis an Mausposition
         elif event.key() == Qt.Key.Key_E:
             view = self.views()[0]
             mouse_pos = view.mapFromGlobal(QCursor.pos())
             pos = view.mapToScene(mouse_pos)
 
             self.add_ellipse(pos.x(), pos.y())
-        #T -> neues Dreieck an Mausposition
         # TODO repair triangle
         # elif event.key() == Qt.Key.Key_T:
         #     view = self.views()[0]
@@ -161,15 +158,14 @@ class DiagramScene(QGraphicsScene):
         #     pos = view.mapToScene(mouse_pos)
 
         #     self.add_triangle(pos.x(), pos.y())
-        #1 -> Farbe ändern
         elif event.key() == Qt.Key.Key_1:
             self.color_dialog(0)
             return
-        #2 -> Farbe der Kante ändern
+        
         elif event.key() == Qt.Key.Key_2:
             self.color_dialog(1)
             return
-        # I -> neues Bild an Mausposition
+        
         elif event.key() == Qt.Key.Key_I:
             view = self.views()[0]
             mouse_pos = view.mapFromGlobal(QCursor.pos())
@@ -177,48 +173,47 @@ class DiagramScene(QGraphicsScene):
 
             self.add_image(pos.x(), pos.y())
             return
-        # Shift + L -> gerichtete Kante zwischen zwei ausgewählten Nodes erstellen
+        
         elif event.key() == Qt.Key.Key_L and event.modifiers() & Qt.KeyboardModifier.ShiftModifier:
             self.edge_create_dialog(True)
             return
-        #L -> Kante zwischen zwei ausgewählten Nodes erstellen
+        
         elif event.key() == Qt.Key.Key_L:
             self.edge_create_dialog(False)
             return
         
-        # Esc -> Auswahl aufheben
         elif event.key() == Qt.Key.Key_Escape:
             self.creating_edge = 0
             self.edge_nodes = [None, None]
             self.win.status.setText("idle")
             self.clearSelection()
             return
-        #Entf -> ausgewählte Items löschen
+        
         elif event.key() == Qt.Key.Key_Delete:
             self.delete()
             return
-        # Ctrl+S -> Szene speichern
+        
         elif event.key() == Qt.Key.Key_S and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             self.save_file_dialog()
             return
-        # Ctrl+O -> Szene laden
+        
         elif event.key() == Qt.Key.Key_O and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             self.load_popup()
             return
-        # Crtl+C -> Kopieren
+        
         elif event.key() == Qt.Key.Key_C and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             self.controller.clipboard.copy(self.selectedItems())
             return
-        # Ctrl+V -> Einfügen
+        
         elif event.key() == Qt.Key.Key_V and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             self.controller.paste(self)
             return
-        # Ctrl+X -> Ausschneiden
+        
         elif event.key() == Qt.Key.Key_X and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             self.controller.clipboard.copy(self.selectedItems())
             self.delete()
             return
-        # Ctrl+D -> Duplizieren
+        
         elif event.key() == Qt.Key.Key_D and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
             self.controller.clipboard.copy(self.selectedItems())
             self.controller.paste(self)
@@ -349,6 +344,8 @@ class DiagramScene(QGraphicsScene):
                 if node:
                     if 'x' in node_update and 'y' in node_update:
                         node.setPos(node_update['x'], node_update['y'])
+                    if 'z_value' in node_update:
+                        node.setZValue(node_update['z_value'])
                     if 'color' in node_update:
                         node.apply_color(QColor(node_update['color'][0], node_update['color'][1], node_update['color'][2]))
                     if 'text_color' in node_update:
@@ -398,6 +395,8 @@ class DiagramScene(QGraphicsScene):
                         edge.apply_width(edge_update['width'])
                     if 'text' in edge_update:
                         edge.apply_text(edge_update['text'])
+                    if 'z_value' in edge_update:
+                        edge.setZValue(edge_update['z_value'])
                     edge.update()
         
         elif changes.get("type") == "nodes_and_edges_added":
@@ -441,6 +440,7 @@ class DiagramScene(QGraphicsScene):
             return None
 
         node.id = data["id"]
+        node.setZValue(data.get('z_value', node.zValue()))
         if 'text_color' in data:
             node.apply_text_color(QColor(*data['text_color']))
         return node
@@ -452,6 +452,7 @@ class DiagramScene(QGraphicsScene):
             edge = EdgeItem(data["start"], data["end"], QColor(data["color"][0], data["color"][1], data["color"][2]), data["width"], text=data.get("text", ""))
 
         edge.id = data["id"]
+        edge.setZValue(data.get('z_value', edge.zValue()))
         if 'text_color' in data:
             edge.apply_text_color(QColor(*data['text_color']))
         return edge

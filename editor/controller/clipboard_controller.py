@@ -42,6 +42,7 @@ class ClipboardController:
                     ],
                     "text": item.text,
                     "id": item.id,
+                    "z_value": item.zValue(),
                     "custom_param": item.custom_param
                 }
                 self.clipboard_data["nodes"].append(node)
@@ -57,7 +58,8 @@ class ClipboardController:
                     ],
                     "width": item.p_width,
                     "directed": item.directed,
-                    "text": item.text
+                    "text": item.text,
+                    "z_value": item.zValue()
                 })
     def paste(self):
         if not self.clipboard_data:
@@ -66,6 +68,7 @@ class ClipboardController:
         id_map = {}
         items = []
         for data in self.clipboard_data["nodes"]:
+            node = None
             if data["type"] == "rect":
                 node = NodeRect(
                     data["x"] + 10, data["y"] + 10,
@@ -108,6 +111,8 @@ class ClipboardController:
                 node.apply_text_color(QColor(*data.get("text_color", [0, 0, 0])))
                 items.append(node)
                 id_map[data.get("id", id(node))] = node
+            if node is not None:
+                node.setZValue(data.get("z_value", node.zValue()))
             
         for data in self.clipboard_data["edges"]:
             start_node = id_map.get(data["start"])
@@ -128,5 +133,6 @@ class ClipboardController:
                         text=data.get("text", "")
                     )
                 edge.apply_text_color(QColor(*data.get("text_color", [0, 0, 0])))
+                edge.setZValue(data.get("z_value", edge.zValue()))
                 items.append(edge)
         return items

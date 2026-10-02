@@ -146,6 +146,8 @@ class ImageNode(NodeItem):
         startnode_action = QAction("Select as Start Node", menu)
         endnode_action = QAction("Select as End Node", menu)
         load_image_action = QAction("load_image", menu)
+        bring_to_front_action = QAction("Bring to Front", menu)
+        send_to_back_action = QAction("Send to Back", menu)
 
         menu.addAction(delete_action)
         menu.addAction(edge_del_action)
@@ -155,11 +157,12 @@ class ImageNode(NodeItem):
         menu.addAction(startnode_action)
         menu.addAction(endnode_action)
         menu.addAction(load_image_action)
+        menu.addAction(bring_to_front_action)
+        menu.addAction(send_to_back_action)
 
         action = menu.exec(event.screenPos())
         scene = self.scene()
 
-        # Aktion 1: Löschen
         if action == delete_action:
             itemlist = []
             for edge in self.edges[:]:
@@ -168,7 +171,6 @@ class ImageNode(NodeItem):
             scene.controller.delete_node(scene, itemlist)
             return
         
-        # Aktion 4: Kanten löschen
         if action == edge_del_action:
             itemlist = []
             for edge in self.edges[:]:
@@ -180,7 +182,6 @@ class ImageNode(NodeItem):
             self.open_text_color_dialog()
             return
         
-        # Aktion 5: Größe ändern
         if action == size_action:
             new_width, ok = QInputDialog.getInt(
                 None, "Change Size", "Width:"
@@ -192,7 +193,6 @@ class ImageNode(NodeItem):
                 scene.controller.resize_node(self, self.width, self.height, new_width, new_height)
             return
         
-        # Aktion 6: Größe ändern unter Beibehaltung des Seitenverhältnisses
         if action == aspect_ratio_size_action:
             new_width, ok = QInputDialog.getInt(
                 None, "Change Size", "Width:"
@@ -202,17 +202,23 @@ class ImageNode(NodeItem):
                 new_height = int(new_width / aspect_ratio)
                 scene.controller.resize_node(self, self.width, self.height, new_width, new_height)
             return
+
+        if action == bring_to_front_action:
+            scene.controller.change_z_order(self, to_front=True)
+            return
+
+        if action == send_to_back_action:
+            scene.controller.change_z_order(self, to_front=False)
+            return
+
+        if action == load_image_action:
+            self.load_image_dialog()
+            return
         
-        # Aktion 6: Node als Startnode für Distanzrechnung wählen
         if action == startnode_action:
             scene.startnode = self
             return
 
-        # Aktion 7: Node als Endnode für Distanzrechnung wählen
         if action == endnode_action:
             scene.endnode = self
-            return
-        
-        if action == load_image_action:
-            self.load_image_dialog()
             return

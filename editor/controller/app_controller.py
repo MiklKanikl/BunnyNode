@@ -9,6 +9,7 @@ from editor.commands.change_color import ChangeColorCommand
 from editor.commands.change_text_color import ChangeTextColorCommand
 from editor.commands.resize_node import ResizeNodeCommand
 from editor.commands.resize_edge import ResizeEdgeCommand
+from editor.commands.change_z_order import ChangeZOrderCommand
 from editor.commands.paste_command import PasteCommand
 from editor.controller.clipboard_controller import ClipboardController
 from editor.items.node import NodeItem
@@ -138,6 +139,34 @@ class AppController:
             'type': 'edges_modified',
             'edges': [edgedata]
         }
+        self.push_command(cmd)
+
+    def change_z_order(self, item, to_front):
+        graph_items = [
+            candidate for candidate in self.scene.items()
+            if isinstance(candidate, (NodeItem, EdgeItem))
+        ]
+        z_values = [candidate.zValue() for candidate in graph_items if candidate is not item]
+        if to_front:
+            new_z_value = max(z_values, default=item.zValue()) + 1
+            command_text = "Bring to Front"
+        else:
+            new_z_value = min(z_values, default=item.zValue()) - 1
+            command_text = "Send to Back"
+
+        cmd = ChangeZOrderCommand(item, item.zValue(), new_z_value, command_text)
+        item_data = item.to_dict()
+        item_data["z_value"] = new_z_value
+        if isinstance(item, NodeItem):
+            self.changes = {
+                'type': 'nodes_modified',
+                'nodes': [item_data]
+            }
+        else:
+            self.changes = {
+                'type': 'edges_modified',
+                'edges': [item_data]
+            }
         self.push_command(cmd)
     
     def paste(self, scene):

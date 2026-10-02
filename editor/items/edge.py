@@ -141,11 +141,12 @@ class EdgeItem(QGraphicsPathItem):
         color_action = menu.addAction("Change color")
         text_color_action = menu.addAction("Change Text Color")
         width_action = menu.addAction("Change width")
+        bring_to_front_action = menu.addAction("Bring to Front")
+        send_to_back_action = menu.addAction("Send to Back")
 
         action = menu.exec(event.screenPos())
         scene = self.scene()
 
-        # Aktion 1: Löschen
         if action == delete_action:
             scene.controller.delete_node(scene, [self])
             return
@@ -156,20 +157,27 @@ class EdgeItem(QGraphicsPathItem):
                 self.update_text(new_text)
             return
         
-        # Aktion 2: Farbe ändern
         if action == color_action:
             self.request_color_change()
 
         if action == text_color_action:
             self.change_text_color()
         
-        # Aktion 3: Dicke ändern
         if action == width_action:
             new_width, ok = QInputDialog.getDouble(
                 None, "Change width", "Width: "
             )
             if new_width and ok:
                 scene.controller.resize_edge(self, self.p_width, new_width)
+            return
+
+        if action == bring_to_front_action:
+            scene.controller.change_z_order(self, to_front=True)
+            return
+
+        if action == send_to_back_action:
+            scene.controller.change_z_order(self, to_front=False)
+            return
 
     def mouseDoubleClickEvent(self, event):
         new_text, ok = QInputDialog.getText(None, "Rename", "New Name:", text=self.text)
@@ -182,6 +190,7 @@ class EdgeItem(QGraphicsPathItem):
             'id': self.id,
             'start': self.start_node.id,
             'end': self.end_node.id,
+            'z_value': self.zValue(),
             'color': [self.color.red(), self.color.green(), self.color.blue()],
             'text_color': [self.text_color.red(), self.text_color.green(), self.text_color.blue()],
             'width': self.p_width,

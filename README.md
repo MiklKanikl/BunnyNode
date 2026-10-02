@@ -52,7 +52,7 @@ the backend is open-source on:
 
 ### Nodes and Edges
 
-You can create ellipse nodes with E and rectangle nodes with R or via the menubar. All other Nodes you can create only via the menubar. You can move them around or change their propreties via the contextmenu by rightclicking them. To create an edge between nodes press L or for a directed edge shift+L and then click on the first and then on the second node. To leave edge creation, press ESC.
+You can create ellipse nodes with E, rectangle nodes with R and image nodes with i or via the menubar. You can move them around or change their propreties via the contextmenu by rightclicking them. To create an edge between nodes press L or for a directed edge shift+L and then click on the first and then on the second node. To leave edge creation, press ESC.
 With DEL you can delete all selected items at once. For easier creating of same items over and over you can: copy (Ctrl+C), paste (Ctrl+V), cut (Ctrl+X) and duplicate (Ctrl+D).
 
 ### File manipulation

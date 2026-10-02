@@ -148,6 +148,8 @@ class NodeItem(QGraphicsItem):
             self.width = data['width']
         if 'height' in data:
             self.height = data['height']
+        if 'z_value' in data:
+            self.setZValue(data['z_value'])
         if 'color' in data:
             self.apply_color(QColor(data['color'][0], data['color'][1], data['color'][2]))
         if 'text_color' in data:
@@ -171,6 +173,8 @@ class NodeItem(QGraphicsItem):
         edge_del_action = QAction("Delete Edges", menu)
         startnode_action = QAction("Select as Start Node", menu)
         endnode_action = QAction("Select as End Node", menu)
+        bring_to_front_action = QAction("Bring to Front", menu)
+        send_to_back_action = QAction("Send to Back", menu)
 
         menu.addAction(delete_action)
         menu.addAction(rename_action)
@@ -180,11 +184,12 @@ class NodeItem(QGraphicsItem):
         menu.addAction(size_action)
         menu.addAction(startnode_action)
         menu.addAction(endnode_action)
+        menu.addAction(bring_to_front_action)
+        menu.addAction(send_to_back_action)
 
         action = menu.exec(event.screenPos())
         scene = self.scene()
 
-        # Aktion 1: Löschen
         if action == delete_action:
             itemlist = []
             for edge in self.edges[:]:
@@ -193,7 +198,6 @@ class NodeItem(QGraphicsItem):
             scene.controller.delete_node(scene, itemlist)
             return
 
-        # Aktion 2: Umbenennen
         if action == rename_action:
             new_text, ok = QInputDialog.getText(
                 None, "Rename", "New Name:"
@@ -202,7 +206,6 @@ class NodeItem(QGraphicsItem):
                 self.update_text(new_text)
             return
 
-        # Aktion 3: Farbe ändern
         if action == color_action:
             self.open_color_dialog()
             return
@@ -211,7 +214,6 @@ class NodeItem(QGraphicsItem):
             self.open_text_color_dialog()
             return
         
-        # Aktion 4: Kanten löschen
         if action == edge_del_action:
             itemlist = []
             for edge in self.edges[:]:
@@ -219,7 +221,6 @@ class NodeItem(QGraphicsItem):
             scene.controller.delete_node(scene, itemlist)
             return
         
-        # Aktion 5: Größe ändern
         if action == size_action:
             new_width, ok = QInputDialog.getInt(
                 None, "Change Size", "Width:"
@@ -230,13 +231,19 @@ class NodeItem(QGraphicsItem):
             if ok and new_width and new_height:
                 scene.controller.resize_node(self, self.width, self.height, new_width, new_height)
             return
+
+        if action == bring_to_front_action:
+            scene.controller.change_z_order(self, to_front=True)
+            return
         
-        # Aktion 6: Node als Startnode für Distanzrechnung wählen
+        if action == send_to_back_action:
+            scene.controller.change_z_order(self, to_front=False)
+            return
+        
         if action == startnode_action:
             scene.startnode = self
             return
 
-        # Aktion 7: Node als Endnode für Distanzrechnung wählen
         if action == endnode_action:
             scene.endnode = self
             return
@@ -247,6 +254,7 @@ class NodeItem(QGraphicsItem):
             'type': self.typ,
             'x': self.pos().x(),
             'y': self.pos().y(),
+            'z_value': self.zValue(),
             'width': self.width,
             'height': self.height,
             'color': [self.color.red(), self.color.green(), self.color.blue()],
