@@ -392,6 +392,8 @@ class DiagramScene(QGraphicsScene):
                         edge.apply_color(QColor(edge_update['color'][0], edge_update['color'][1], edge_update['color'][2]))
                     if 'width' in edge_update:
                         edge.apply_width(edge_update['width'])
+                    if 'text' in edge_update:
+                        edge.apply_text(edge_update['text'])
                     edge.update()
         
         elif changes.get("type") == "nodes_and_edges_added":
@@ -439,9 +441,9 @@ class DiagramScene(QGraphicsScene):
 
     def create_edge_from_data(self, data):
         if data["directed"]:
-            edge = DirectedEdgeItem(data["start"], data["end"], QColor(data["color"][0], data["color"][1], data["color"][2]), data["width"])
+            edge = DirectedEdgeItem(data["start"], data["end"], QColor(data["color"][0], data["color"][1], data["color"][2]), data["width"], text=data.get("text", ""))
         else:
-            edge = EdgeItem(data["start"], data["end"], QColor(data["color"][0], data["color"][1], data["color"][2]), data["width"])
+            edge = EdgeItem(data["start"], data["end"], QColor(data["color"][0], data["color"][1], data["color"][2]), data["width"], text=data.get("text", ""))
 
         edge.id = data["id"]
         return edge

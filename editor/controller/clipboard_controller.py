@@ -43,7 +43,8 @@ class ClipboardController:
                     "end": item.end_node.id,
                     "color": item.colour,
                     "width": item.p_width,
-                    "directed": item.directed
+                    "directed": item.directed,
+                    "text": item.text
                 })
     def paste(self):
         if not self.clipboard_data:
@@ -90,13 +91,15 @@ class ClipboardController:
                     edge = DirectedEdgeItem(
                     start_node, end_node,
                     QColor(data["color"][0], data["color"][1], data["color"][2]),
-                    data["width"]
+                    data["width"],
+                    text=data.get("text", "")
                 )
                 else:
                     edge = EdgeItem(
                         start_node, end_node,
                         QColor(data["color"][0], data["color"][1], data["color"][2]),
-                        data["width"]
+                        data["width"],
+                        text=data.get("text", "")
                     )
                 items.append(edge)
         return items
