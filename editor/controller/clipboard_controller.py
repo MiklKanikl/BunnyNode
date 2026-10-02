@@ -6,6 +6,7 @@ from editor.items.rectangle import NodeRect
 from editor.items.ellipse import NodeEllipse
 from editor.items.edge import EdgeItem
 from editor.items.directed_edge import DirectedEdgeItem
+from editor.items.triangle import NodeTriangle
 
 class ClipboardController:
     def __init__(self):
@@ -25,6 +26,8 @@ class ClipboardController:
                     typ_str = "ellipse"
                 elif isinstance(item, ImageNode):
                     typ_str = "image"
+                elif isinstance(item, NodeTriangle):
+                    typ_str = "triangle"
                 node = {
                     "type": typ_str,
                     "x": item.scenePos().x(),
@@ -32,6 +35,11 @@ class ClipboardController:
                     "width": item.width,
                     "height": item.height,
                     "color": item.colour,
+                    "text_color": [
+                        item.text_color.red(),
+                        item.text_color.green(),
+                        item.text_color.blue()
+                    ],
                     "text": item.text,
                     "id": item.id,
                     "custom_param": item.custom_param
@@ -42,6 +50,11 @@ class ClipboardController:
                     "start": item.start_node.id,
                     "end": item.end_node.id,
                     "color": item.colour,
+                    "text_color": [
+                        item.text_color.red(),
+                        item.text_color.green(),
+                        item.text_color.blue()
+                    ],
                     "width": item.p_width,
                     "directed": item.directed,
                     "text": item.text
@@ -60,6 +73,7 @@ class ClipboardController:
                     QColor(data["color"][0], data["color"][1], data["color"][2]),
                     data.get("text", "")
                 )
+                node.apply_text_color(QColor(*data.get("text_color", [0, 0, 0])))
                 items.append(node)
                 id_map[data.get("id", id(node))] = node
             
@@ -70,6 +84,7 @@ class ClipboardController:
                     QColor(data["color"][0], data["color"][1], data["color"][2]),
                     data.get("text", "")
                 )
+                node.apply_text_color(QColor(*data.get("text_color", [0, 0, 0])))
                 items.append(node)
                 id_map[data.get("id", id(node))] = node
             elif data["type"] == "image":
@@ -80,6 +95,17 @@ class ClipboardController:
                     text=data.get("text", ""),
                     custom_param=data.get("custom_param", [])
                 )
+                node.apply_text_color(QColor(*data.get("text_color", [0, 0, 0])))
+                items.append(node)
+                id_map[data.get("id", id(node))] = node
+            elif data["type"] == "triangle":
+                node = NodeTriangle(
+                    data["x"] + 10, data["y"] + 10,
+                    data["width"], data["height"],
+                    QColor(data["color"][0], data["color"][1], data["color"][2]),
+                    data.get("text", "")
+                )
+                node.apply_text_color(QColor(*data.get("text_color", [0, 0, 0])))
                 items.append(node)
                 id_map[data.get("id", id(node))] = node
             
@@ -101,5 +127,6 @@ class ClipboardController:
                         data["width"],
                         text=data.get("text", "")
                     )
+                edge.apply_text_color(QColor(*data.get("text_color", [0, 0, 0])))
                 items.append(edge)
         return items

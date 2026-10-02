@@ -6,6 +6,7 @@ from editor.commands.move_node import MoveNodeCommand
 from editor.commands.rename_node import RenameNodeCommand
 from editor.commands.rename_edge import RenameEdgeCommand
 from editor.commands.change_color import ChangeColorCommand
+from editor.commands.change_text_color import ChangeTextColorCommand
 from editor.commands.resize_node import ResizeNodeCommand
 from editor.commands.resize_edge import ResizeEdgeCommand
 from editor.commands.paste_command import PasteCommand
@@ -90,6 +91,22 @@ class AppController:
         cmd = ChangeColorCommand(item, old_color, new_color)
         itemdata = item.to_dict()
         itemdata["color"] = [new_color.red(), new_color.green(), new_color.blue()]
+        if isinstance(item, NodeItem):
+            self.changes = {
+                'type': 'nodes_modified',
+                'nodes': [itemdata]
+            }
+        elif isinstance(item, EdgeItem):
+            self.changes = {
+                'type': 'edges_modified',
+                'edges': [itemdata]
+            }
+        self.push_command(cmd)
+
+    def change_text_color(self, item, old_color, new_color):
+        cmd = ChangeTextColorCommand(item, old_color, new_color)
+        itemdata = item.to_dict()
+        itemdata["text_color"] = [new_color.red(), new_color.green(), new_color.blue()]
         if isinstance(item, NodeItem):
             self.changes = {
                 'type': 'nodes_modified',

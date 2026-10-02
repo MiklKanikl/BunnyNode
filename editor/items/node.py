@@ -35,8 +35,9 @@ class NodeItem(QGraphicsItem):
         self.brush = QBrush(self.color)
 
         self.text = text
+        self.text_color = QColor("black")
         self.label = QGraphicsTextItem(self.text, self)
-        self.label.setDefaultTextColor(QColor("black"))
+        self.label.setDefaultTextColor(self.text_color)
         self.updateLabelPosition()
         self.custom_init(custom_param)
         self.resize_handle = ResizeHandle(self)
@@ -88,6 +89,23 @@ class NodeItem(QGraphicsItem):
         self.brush = QBrush(self.color)
         self.colour = [self.color.red(), self.color.green(), self.color.blue()]
         self.update()
+
+    def apply_text_color(self, color: QColor):
+        self.text_color = QColor(color)
+        self.label.setDefaultTextColor(self.text_color)
+
+    def open_text_color_dialog(self):
+        scene = self.scene()
+        if not scene or not scene.views():
+            return
+
+        new_color = QColorDialog.getColor(
+            self.text_color,
+            scene.views()[0],
+            "Choose Text Color"
+        )
+        if new_color.isValid() and scene.controller:
+            scene.controller.change_text_color(self, self.text_color, new_color)
     
     def open_color_dialog(self):
         scene = self.scene()
@@ -132,6 +150,8 @@ class NodeItem(QGraphicsItem):
             self.height = data['height']
         if 'color' in data:
             self.apply_color(QColor(data['color'][0], data['color'][1], data['color'][2]))
+        if 'text_color' in data:
+            self.apply_text_color(QColor(*data['text_color']))
         if 'text' in data:
             self.text = data['text']
             self.label.setPlainText(self.text)
@@ -146,6 +166,7 @@ class NodeItem(QGraphicsItem):
         delete_action = QAction("Delete", menu)
         rename_action = QAction("Rename", menu)
         color_action  = QAction("Change Color", menu)
+        text_color_action = QAction("Change Text Color", menu)
         size_action = QAction("Change Size", menu)
         edge_del_action = QAction("Delete Edges", menu)
         startnode_action = QAction("Select as Start Node", menu)
@@ -154,6 +175,7 @@ class NodeItem(QGraphicsItem):
         menu.addAction(delete_action)
         menu.addAction(rename_action)
         menu.addAction(color_action)
+        menu.addAction(text_color_action)
         menu.addAction(edge_del_action)
         menu.addAction(size_action)
         menu.addAction(startnode_action)
@@ -183,6 +205,10 @@ class NodeItem(QGraphicsItem):
         # Aktion 3: Farbe ändern
         if action == color_action:
             self.open_color_dialog()
+            return
+
+        if action == text_color_action:
+            self.open_text_color_dialog()
             return
         
         # Aktion 4: Kanten löschen
@@ -224,6 +250,7 @@ class NodeItem(QGraphicsItem):
             'width': self.width,
             'height': self.height,
             'color': [self.color.red(), self.color.green(), self.color.blue()],
+            'text_color': [self.text_color.red(), self.text_color.green(), self.text_color.blue()],
             'text': self.text,
             'custom_param': self.custom_param
         })

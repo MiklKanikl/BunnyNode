@@ -23,8 +23,9 @@ class EdgeItem(QGraphicsPathItem):
         self.colour = [color.red(), color.green(), color.blue()]
         self.setPen(QPen(color, path_width))
         self.text = text
+        self.text_color = QColor("black")
         self.label = QGraphicsTextItem(self.text, self)
-        self.label.setDefaultTextColor(QColor("black"))
+        self.label.setDefaultTextColor(self.text_color)
 
         self.update_position()
         self.custom_init(custom_param)
@@ -104,6 +105,23 @@ class EdgeItem(QGraphicsPathItem):
         self.set_pen()
         self.colour = [self.color.red(), self.color.green(), self.color.blue()]
         self.update()
+
+    def apply_text_color(self, color: QColor):
+        self.text_color = QColor(color)
+        self.label.setDefaultTextColor(self.text_color)
+
+    def change_text_color(self):
+        scene = self.scene()
+        if not scene or not scene.views():
+            return
+
+        new_color = QColorDialog.getColor(
+            self.text_color,
+            scene.views()[0],
+            "Choose Text Color"
+        )
+        if new_color.isValid() and scene.controller:
+            scene.controller.change_text_color(self, self.text_color, new_color)
     
     def request_color_change(self):
         QTimer.singleShot(0, self.change_color)
@@ -121,6 +139,7 @@ class EdgeItem(QGraphicsPathItem):
         delete_action = menu.addAction("Delete")
         rename_action = menu.addAction("Rename")
         color_action = menu.addAction("Change color")
+        text_color_action = menu.addAction("Change Text Color")
         width_action = menu.addAction("Change width")
 
         action = menu.exec(event.screenPos())
@@ -140,6 +159,9 @@ class EdgeItem(QGraphicsPathItem):
         # Aktion 2: Farbe ändern
         if action == color_action:
             self.request_color_change()
+
+        if action == text_color_action:
+            self.change_text_color()
         
         # Aktion 3: Dicke ändern
         if action == width_action:
@@ -161,6 +183,7 @@ class EdgeItem(QGraphicsPathItem):
             'start': self.start_node.id,
             'end': self.end_node.id,
             'color': [self.color.red(), self.color.green(), self.color.blue()],
+            'text_color': [self.text_color.red(), self.text_color.green(), self.text_color.blue()],
             'width': self.p_width,
             'directed': self.directed,
             'text': self.text

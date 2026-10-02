@@ -90,6 +90,17 @@ class InspectorDock(QDockWidget):
             )
         color_layout.addWidget(self.color_display, 0, 1)
         color_layout.addWidget(self.color_button, 0, 2)
+
+        color_layout.addWidget(QLabel("Text Color:"), 1, 0)
+        self.text_color_button = QPushButton("Choose Text Color...")
+        self.text_color_button.clicked.connect(self._on_text_color_clicked)
+        self.text_color_display = QLabel()
+        self.text_color_display.setFixedSize(30, 30)
+        self.text_color_display.setStyleSheet(
+            "background-color: rgb(0, 0, 0); border: 1px solid black;"
+        )
+        color_layout.addWidget(self.text_color_display, 1, 1)
+        color_layout.addWidget(self.text_color_button, 1, 2)
         
         self.color_group.setLayout(color_layout)
         self.main_layout.addWidget(self.color_group)
@@ -205,6 +216,12 @@ class InspectorDock(QDockWidget):
                 f"background-color: rgb({color.red()}, {color.green()}, {color.blue()}); "
                 f"border: 1px solid black;"
             )
+        if hasattr(self.current_item, 'text_color'):
+            color = self.current_item.text_color
+            self.text_color_display.setStyleSheet(
+                f"background-color: rgb({color.red()}, {color.green()}, {color.blue()}); "
+                f"border: 1px solid black;"
+            )
     
     def _update_item_specific_properties(self):
         if isinstance(self.current_item, EdgeItem):
@@ -260,6 +277,16 @@ class InspectorDock(QDockWidget):
         if color.isValid():
             self.controller.change_color(self.current_item, self.current_item.color, color)
             self._update_common_properties()
+
+    def _on_text_color_clicked(self):
+        if not self.current_item or not hasattr(self.current_item, 'text_color'):
+            return
+
+        current_color = self.current_item.text_color
+        color = QColorDialog.getColor(current_color, self, "Choose Text Color")
+        if color.isValid():
+            self.controller.change_text_color(self.current_item, current_color, color)
+            self._update_common_properties()
     
     def _on_text_changed(self):
         if not self.current_item or not hasattr(self.current_item, 'update_text'):
@@ -304,6 +331,7 @@ class InspectorDock(QDockWidget):
         self.text_input.setText("")
         self.edge_width_spin.setValue(1)
         self.color_display.setStyleSheet("background-color: white; border: 1px solid black;")
+        self.text_color_display.setStyleSheet("background-color: black; border: 1px solid black;")
         
         self.x_spin.blockSignals(False)
         self.y_spin.blockSignals(False)

@@ -142,12 +142,14 @@ class ImageNode(NodeItem):
         size_action = QAction("Change Size", menu)
         aspect_ratio_size_action = QAction("Change Size keeping aspect ratio", menu)
         edge_del_action = QAction("Delete Edges", menu)
+        text_color_action = QAction("Change Text Color", menu)
         startnode_action = QAction("Select as Start Node", menu)
         endnode_action = QAction("Select as End Node", menu)
         load_image_action = QAction("load_image", menu)
 
         menu.addAction(delete_action)
         menu.addAction(edge_del_action)
+        menu.addAction(text_color_action)
         menu.addAction(size_action)
         menu.addAction(aspect_ratio_size_action)
         menu.addAction(startnode_action)
@@ -172,6 +174,10 @@ class ImageNode(NodeItem):
             for edge in self.edges[:]:
                 itemlist.append(edge)
             scene.controller.delete_node(scene, itemlist)
+            return
+
+        if action == text_color_action:
+            self.open_text_color_dialog()
             return
         
         # Aktion 5: Größe ändern

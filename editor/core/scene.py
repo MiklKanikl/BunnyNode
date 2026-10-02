@@ -351,6 +351,8 @@ class DiagramScene(QGraphicsScene):
                         node.setPos(node_update['x'], node_update['y'])
                     if 'color' in node_update:
                         node.apply_color(QColor(node_update['color'][0], node_update['color'][1], node_update['color'][2]))
+                    if 'text_color' in node_update:
+                        node.apply_text_color(QColor(*node_update['text_color']))
                     if 'text' in node_update and not isinstance(node, ImageNode):
                         node.text = node_update['text']
                         node.label.setPlainText(node_update['text'])
@@ -390,6 +392,8 @@ class DiagramScene(QGraphicsScene):
                 if edge:
                     if 'color' in edge_update:
                         edge.apply_color(QColor(edge_update['color'][0], edge_update['color'][1], edge_update['color'][2]))
+                    if 'text_color' in edge_update:
+                        edge.apply_text_color(QColor(*edge_update['text_color']))
                     if 'width' in edge_update:
                         edge.apply_width(edge_update['width'])
                     if 'text' in edge_update:
@@ -437,6 +441,8 @@ class DiagramScene(QGraphicsScene):
             return None
 
         node.id = data["id"]
+        if 'text_color' in data:
+            node.apply_text_color(QColor(*data['text_color']))
         return node
 
     def create_edge_from_data(self, data):
@@ -446,6 +452,8 @@ class DiagramScene(QGraphicsScene):
             edge = EdgeItem(data["start"], data["end"], QColor(data["color"][0], data["color"][1], data["color"][2]), data["width"], text=data.get("text", ""))
 
         edge.id = data["id"]
+        if 'text_color' in data:
+            edge.apply_text_color(QColor(*data['text_color']))
         return edge
     
     def update_recent_files(self, filename):
