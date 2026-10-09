@@ -182,10 +182,10 @@ class NodeItem(QGraphicsItem):
         menu.addAction(text_color_action)
         menu.addAction(edge_del_action)
         menu.addAction(size_action)
-        menu.addAction(startnode_action)
-        menu.addAction(endnode_action)
         menu.addAction(bring_to_front_action)
         menu.addAction(send_to_back_action)
+        menu.addAction(startnode_action)
+        menu.addAction(endnode_action)
 
         action = menu.exec(event.screenPos())
         scene = self.scene()

@@ -130,8 +130,10 @@ class EdgeItem(QGraphicsPathItem):
         self.setPen(QPen(self.color, self.p_width))
     
     def apply_width(self, width):
+        self.prepareGeometryChange()
         self.p_width = width
         self.set_pen()
+        self.update()
     
     def contextMenuEvent(self, event):
         menu = QMenu()
