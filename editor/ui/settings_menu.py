@@ -1,4 +1,8 @@
-from PyQt6.QtWidgets import QFrame, QHBoxLayout, QSpinBox, QWidget, QVBoxLayout, QPushButton, QLabel
+import json
+
+from PyQt6.QtWidgets import (
+    QComboBox, QFormLayout, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
+)
 from PyQt6.QtCore import Qt
 from editor.path_utils import get_settings_path
 
@@ -6,6 +10,7 @@ class Settings_menu(QWidget):
     def __init__(self, parent=None):
         self.parent = parent
         super().__init__(parent)
+        self.setObjectName("settingsMenu")
         self.init_ui()
     
     def init_ui(self):
@@ -13,7 +18,13 @@ class Settings_menu(QWidget):
         layout.setContentsMargins(25, 25, 25, 25)
         layout.setSpacing(20)
         
-        layout.addSpacing(10)
+        settings_layout = QFormLayout()
+        settings_layout.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
+        self.theme_combo = QComboBox()
+        self.theme_combo.addItem("Light", "light")
+        self.theme_combo.addItem("Dark", "dark")
+        settings_layout.addRow("Theme:", self.theme_combo)
+        layout.addLayout(settings_layout)
         
         button_layout = QHBoxLayout()
         button_layout.addStretch()
@@ -29,51 +40,38 @@ class Settings_menu(QWidget):
         
         layout.addLayout(button_layout)
         layout.addSpacing(30)
-
-        self.in_progress_label = QLabel("Settings coming soon...")
-        self.in_progress_label.setStyleSheet("font-size: 36px; color: white;")
-        self.in_progress_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        layout.addWidget(self.in_progress_label)
         
         layout.addStretch()
         self.setLayout(layout)
+        self.load_settings()
     
     def create_button(self, text, callback):
         button = QPushButton(text)
         button.setCursor(Qt.CursorShape.PointingHandCursor)
-        button.setFixedSize(120, 32)
+        button.setFixedSize(140, 32)
         button.clicked.connect(callback)
-        button.setStyleSheet("""
-            QPushButton {
-                background-color: #2c3e50;
-                color: white;
-                border: none;
-                border-radius: 6px;
-                font-size: 12px;
-                font-weight: 500;
-            }
-            QPushButton:hover {
-                background-color: #293847;
-            }
-            QPushButton:pressed {
-                background-color: #1c2833;
-            }
-        """)
         return button
+
+    def load_settings(self):
+        settings = self.parent.controller.get_current_settings()
+        theme = settings.get("theme", "dark")
+        index = self.theme_combo.findData(theme)
+        self.theme_combo.setCurrentIndex(index if index >= 0 else 0)
     
     def back_to_editor(self):
         self.parent.stacked_widget.setCurrentWidget(self.parent.view)
         self.parent.show_bars()
     
     def apply_settings(self):
-        settings = {}
-        import json
+        settings = self.parent.controller.get_current_settings()
+        theme = self.theme_combo.currentData()
+        settings["theme"] = theme
         settings_path = get_settings_path()
         with open(settings_path, "w") as f:
             json.dump(settings, f, indent=4)
-        self.parent.view.scene().controller.get_current_settings()
+        self.parent.apply_theme(theme)
         self.parent.view.update_settings_stats()
     
     def reset_settings(self):
-        pass
+        self.theme_combo.setCurrentIndex(self.theme_combo.findData("dark"))
+        self.apply_settings()

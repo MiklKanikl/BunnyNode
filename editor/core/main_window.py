@@ -20,10 +20,10 @@ class EditorWindow(QMainWindow):
         self.stacked_widget.addWidget(self.welcome_screen)
         self.view = view
         self.stacked_widget.addWidget(view)
+        self.controller = AppController()
         self.settings_menu = Settings_menu(self)
         self.stacked_widget.addWidget(self.settings_menu)
         self.build_menubar()
-        self.controller = AppController()
         self.build_toolbar()
         self.build_statusbar()
         self.create_docks()
@@ -38,7 +38,92 @@ class EditorWindow(QMainWindow):
         self.client.user_left.connect(self.on_user_left)
         self.client.error_occurred.connect(self.on_error)
         self.client.undo_last_command.connect(lambda: self.controller.undostack.undo())
+        self.apply_theme(self.controller.get_current_settings().get("theme", "dark"))
         self.client.start()
+
+    def apply_theme(self, theme):
+        themes = {
+            "light": {
+                "window": "#f4f6f8",
+                "surface": "#ffffff",
+                "text": "#20252b",
+                "border": "#c8ced6",
+                "button": "#e4e8ed",
+                "button_hover": "#d6dce3",
+                "selection": "#c7dcf3",
+            },
+            "dark": {
+                "window": "#20252b",
+                "surface": "#2b3139",
+                "text": "#e8edf2",
+                "border": "#48515c",
+                "button": "#3a424c",
+                "button_hover": "#48525e",
+                "selection": "#465d77",
+            },
+        }
+        colors = themes.get(theme, themes["light"])
+        self.setStyleSheet(f"""
+            QMainWindow, QWidget {{
+                background-color: {colors["window"]};
+                color: {colors["text"]};
+            }}
+            QLabel {{
+                background-color: transparent;
+                color: {colors["text"]};
+            }}
+            QGraphicsView {{
+                background-color: #ffffff;
+                color: #000000;
+            }}
+            QPushButton {{
+                background-color: {colors["button"]};
+                color: {colors["text"]};
+                border: 1px solid {colors["border"]};
+                border-radius: 6px;
+                padding: 5px 9px;
+            }}
+            QPushButton:hover {{
+                background-color: {colors["button_hover"]};
+            }}
+            QPushButton:pressed {{
+                background-color: {colors["border"]};
+            }}
+            QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox, QListWidget {{
+                background-color: {colors["surface"]};
+                color: {colors["text"]};
+                border: 1px solid {colors["border"]};
+                border-radius: 3px;
+                padding: 3px;
+                selection-background-color: {colors["selection"]};
+            }}
+            QGroupBox {{
+                color: {colors["text"]};
+                border: 1px solid {colors["border"]};
+                border-radius: 4px;
+                margin-top: 8px;
+                padding-top: 8px;
+            }}
+            QMenuBar, QMenu, QToolBar, QStatusBar, QDockWidget {{
+                background-color: {colors["surface"]};
+                color: {colors["text"]};
+            }}
+            QMenu::item:selected {{
+                background-color: {colors["selection"]};
+            }}
+            QDockWidget::title {{
+                background-color: {colors["surface"]};
+                color: {colors["text"]};
+                padding: 5px;
+            }}
+            QScrollArea {{
+                background-color: {colors["window"]};
+                border: 1px solid {colors["border"]};
+            }}
+            QScrollArea QWidget {{
+                background-color: {colors["window"]};
+            }}
+        """)
     
     def build_statusbar(self):
         self.setStatusBar(QStatusBar(self))
@@ -170,6 +255,7 @@ class EditorWindow(QMainWindow):
         self.client.leave_room()
     
     def open_settings(self):
+        self.settings_menu.load_settings()
         self.stacked_widget.setCurrentWidget(self.settings_menu)
         self.hide_bars()
     

@@ -66,3 +66,5 @@ You can now work in real time with another people. You can either create a room 
 ### Other
 
 You can compute the path distance between two selected nodes that are connected. For that you can right click on the nodes and choose one as the start node and one as the endnode.
+
+Use **Other → Settings** to choose a light or dark interface theme. The diagram canvas stays white in either theme.

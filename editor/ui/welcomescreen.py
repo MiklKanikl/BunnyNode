@@ -20,12 +20,12 @@ class WelcomeScreen(QWidget):
         
         title = QLabel("BunnyNode")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        title.setStyleSheet("font-size: 32px; font-weight: bold; color: #2c3e50;")
+        title.setStyleSheet("font-size: 32px; font-weight: bold;")
         layout.addWidget(title)
         
         desc = QLabel("Create and manage your diagrams with ease. Start a new project or open an existing one.")
         desc.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        desc.setStyleSheet("font-size: 14px; color: #7f8c8d;")
+        desc.setStyleSheet("font-size: 14px;")
         layout.addWidget(desc)
         
         layout.addSpacing(40)
@@ -102,29 +102,13 @@ class WelcomeScreen(QWidget):
         layout.addWidget(title_label)
         
         desc_label = QLabel(description)
-        desc_label.setStyleSheet("font-size: 12px; color: #7f8c8d;")
+        desc_label.setStyleSheet("font-size: 12px;")
         desc_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         desc_label.setWordWrap(True)
         layout.addWidget(desc_label)
         
         card.setLayout(layout)
         card.clicked.connect(callback)
-        
-        card.setStyleSheet("""
-            QPushButton {
-                background-color: #2c3e50;
-                border: 2px solid dimgray;
-                border-radius: 10px;
-            }
-            QPushButton:hover {
-                background-color: #293847;
-                border-color: #2c3e50;
-            }
-            QPushButton:pressed {
-                background-color: #1c2833;
-            }
-
-        """)
         
         return card
     
