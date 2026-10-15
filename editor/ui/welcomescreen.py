@@ -2,8 +2,7 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QGridLayo
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
 from editor.resources import icon
-from editor.path_utils import get_application_path
-import os
+from editor.path_utils import get_recent_files_path
 
 class WelcomeScreen(QWidget):
     """Welcome Screen with quick access to common actions and recent files"""
@@ -129,16 +128,11 @@ class WelcomeScreen(QWidget):
     
     def load_recent_files(self):
         import json
-        app_path = get_application_path()
-        recent_files_path = os.path.join(app_path, "editor", "recent_files.json")
-        
-        try:
-            with open(recent_files_path, "r") as f:
-                recent_files = json.load(f)
-            for file in recent_files:
-                self.recent_widget.addItem(file)
-        except FileNotFoundError:
-            pass
+        recent_files_path = get_recent_files_path()
+        with open(recent_files_path, "r") as f:
+            recent_files = json.load(f)
+        for file in recent_files:
+            self.recent_widget.addItem(file)
     
     def reload_recent_files(self):
         self.recent_widget.clear()

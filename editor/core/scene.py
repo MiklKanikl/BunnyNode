@@ -9,7 +9,7 @@ from editor.items.edge import EdgeItem
 from editor.items.directed_edge import DirectedEdgeItem
 from editor.calculations.dijkstra import shortest_path
 from editor.items.triangle import NodeTriangle
-from editor.path_utils import get_saves_directory
+from editor.path_utils import get_recent_files_path, get_saves_directory
 import os
 
 class DiagramScene(QGraphicsScene):
@@ -90,15 +90,24 @@ class DiagramScene(QGraphicsScene):
             self.controller.add_node(self, image)
     
     def save_file_dialog(self):
-        new_text, ok = QInputDialog.getText(
-            None, "Save As", "Filename (without extension):", text="diagram"
+        filename, _ = QFileDialog.getSaveFileName(
+            self.win,
+            "Save Diagram",
+            os.path.join(get_saves_directory(), "diagram.diagram"),
+            "BunnyNode diagrams (*.diagram)",
         )
-        if ok and new_text.strip():
-            folder = get_saves_directory()
-            filename = os.path.join(folder, new_text.strip() + ".diagram")
-        else:
+        if not filename:
             return
-        self.save_scene(filename=filename)
+
+        if not filename.lower().endswith(".diagram"):
+            filename += ".diagram"
+        try:
+            self.save_scene(filename=filename)
+        except OSError as error:
+            QMessageBox.critical(
+                self.win, "Save Failed", f"Could not save the diagram:\n{error}"
+            )
+            return
         self.update_recent_files(filename)
     
     def load_file_dialog(self):
@@ -459,13 +468,7 @@ class DiagramScene(QGraphicsScene):
     
     def update_recent_files(self, filename):
         import json
-        from editor.path_utils import get_data_directory, get_application_path
-        
-        if hasattr(self, 'win') and self.win:
-            app_path = get_application_path()
-        else:
-            app_path = get_application_path()
-        recent_files_path = os.path.join(app_path, "editor", "recent_files.json")
+        recent_files_path = get_recent_files_path()
         
         try:
             with open(recent_files_path, "r") as f:
@@ -473,15 +476,10 @@ class DiagramScene(QGraphicsScene):
         except FileNotFoundError:
             recent_files = []
         
-        last_folder = os.path.basename(os.path.dirname(filename))
-        fname = os.path.basename(filename)
-        folder_name = os.path.join(last_folder, fname)
         if filename in recent_files:
             recent_files.remove(filename)
-        elif folder_name in recent_files:
-            recent_files.remove(folder_name)
         recent_files.insert(0, filename)
-        recent_files = recent_files[:0]
+        recent_files = recent_files[:10]
 
         with open(recent_files_path, "w") as f:
             json.dump(recent_files, f, indent=4)

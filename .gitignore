@@ -1,22 +1,24 @@
+# Python
 __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
 *.pyc
+.venv/
 
+# Tests
 .pytest_cache/
 .coverage
 
-.venv/
-
-exports/*
-saves/*
-
-.DS_store
-
-tasks.md
-
+# VS Code
 .vscode/
 .VSCodeCounter/
 
-your_settings.json
+# ?
+.DS_store
+
+# Dev only
+tasks.md
+
+# local storage files
+local_storage/

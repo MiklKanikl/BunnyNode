@@ -57,7 +57,7 @@ With DEL you can delete all selected items at once. For easier creating of same 
 
 ### File manipulation
 
-You can save your graph with ctrl+s, load an existing one with ctrl+o or alternatively do these actions via the toolbar. You also can export your graph as a PNG picture via the toolbar.
+You can save your graph with ctrl+s or via the toolbar; both open a Save As dialog so you can choose the file and folder. Load an existing one with ctrl+o or via the toolbar. You also can export your graph as a PNG picture via the toolbar. Application settings and recent files are stored in `local_storage` next to the project (or next to `BunnyNode.exe` for the packaged app); the folder is created automatically when needed.
 
 ### Real Time Colab mode
 
