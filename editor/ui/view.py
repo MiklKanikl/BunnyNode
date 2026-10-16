@@ -2,6 +2,7 @@ from PyQt6.QtWidgets import QGraphicsView, QFileDialog
 from PyQt6.QtCore import Qt, QPoint
 from PyQt6.QtGui import QPainter
 from editor.path_utils import get_exports_directory
+from editor.ui.components.createdock import CREATE_ITEM_MIME_TYPE
 import os
 
 class DiagramView(QGraphicsView):
@@ -13,6 +14,7 @@ class DiagramView(QGraphicsView):
         self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.setResizeAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.setViewportUpdateMode(QGraphicsView.ViewportUpdateMode.FullViewportUpdate)
+        self.setAcceptDrops(True)
         
         self.zoom = 0
         self.zoom_step = 0.1
@@ -57,6 +59,51 @@ class DiagramView(QGraphicsView):
             return
         
         self.scene().export_png(path)
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasFormat(CREATE_ITEM_MIME_TYPE):
+            event.acceptProposedAction()
+            return
+        super().dragEnterEvent(event)
+
+    def dragMoveEvent(self, event):
+        if event.mimeData().hasFormat(CREATE_ITEM_MIME_TYPE):
+            event.acceptProposedAction()
+            return
+        super().dragMoveEvent(event)
+
+    def dropEvent(self, event):
+        mime_data = event.mimeData()
+        if not mime_data.hasFormat(CREATE_ITEM_MIME_TYPE):
+            super().dropEvent(event)
+            return
+
+        item_type = bytes(mime_data.data(CREATE_ITEM_MIME_TYPE)).decode("utf-8")
+        position = self.mapToScene(event.position().toPoint())
+        scene = self.scene()
+
+        if item_type in ("rect", "ellipse", "triangle", "image"):
+            x = position.x() - 40
+            y = position.y() - 40
+            creators = {
+                "rect": scene.add_rect,
+                "ellipse": scene.add_ellipse,
+                "triangle": scene.add_triangle,
+                "image": scene.add_image,
+            }
+            creators[item_type](x, y)
+        elif item_type in ("edge", "directed_edge"):
+            source = scene.node_at(position)
+            if source is None:
+                event.ignore()
+                return
+            scene.begin_edge_drag(source, item_type == "directed_edge")
+        else:
+            event.ignore()
+            return
+
+        event.setDropAction(Qt.DropAction.CopyAction)
+        event.accept()
     
     def compute_distance(self, unweighted=False):
         self.scene().setup_path_compution(unweighted=unweighted)

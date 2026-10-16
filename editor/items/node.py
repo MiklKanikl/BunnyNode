@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtGui import QColor, QBrush, QPen, QAction, QPainterPath
 from PyQt6.QtCore import QRectF, QTimer
-from editor.elements.resize_handle import ResizeHandle
+from editor.ui.components.resize_handle import ResizeHandle
 
 import copy
 
