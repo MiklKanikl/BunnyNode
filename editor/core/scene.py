@@ -11,6 +11,7 @@ from editor.calculations.dijkstra import shortest_path
 from editor.items.triangle import NodeTriangle
 from editor.path_utils import get_recent_files_path, get_saves_directory
 import os
+import math
 
 class DiagramScene(QGraphicsScene):
     def __init__(self):
@@ -37,26 +38,34 @@ class DiagramScene(QGraphicsScene):
         self.controller.set_scene(self)
         self.win = self.views()[0].window()
     
-    def export_png(self, path: str):
-        EXPORT_WIDTH = 3000
-        EXPORT_HEIGHT = 3000
+    def export_png(self, path: str, source_rect=None):
+        if source_rect is None:
+            source_rect = self.sceneRect()
+            image_width = 3000
+            image_height = 3000
+        else:
+            source_rect = source_rect.normalized()
+            if source_rect.isEmpty():
+                raise ValueError("The export region must have a non-zero width and height")
+            image_width = max(1, math.ceil(source_rect.width()))
+            image_height = max(1, math.ceil(source_rect.height()))
 
         image = QImage(
-            EXPORT_WIDTH,
-            EXPORT_HEIGHT,
+            image_width,
+            image_height,
             QImage.Format.Format_ARGB32
         )
         image.fill(Qt.GlobalColor.black)
         painter = QPainter(image)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        source_rect = QRectF(0, 0, EXPORT_WIDTH, EXPORT_HEIGHT)
-        target_rect = QRectF(0, 0, EXPORT_WIDTH, EXPORT_HEIGHT)
+        target_rect = QRectF(0, 0, image_width, image_height)
 
         self.render(painter, target_rect, source_rect)
 
         painter.end()
 
-        image.save(path)
+        if not image.save(path):
+            raise OSError(f"Could not save PNG export to {path}")
     
     def add_rect(self, x, y):
         rect = NodeRect(
