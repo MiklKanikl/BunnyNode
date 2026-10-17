@@ -1,5 +1,5 @@
-from PyQt6.QtWidgets import QGraphicsScene, QColorDialog, QInputDialog, QFileDialog, QMessageBox, QGraphicsPixmapItem
-from PyQt6.QtGui import QBrush, QColor, QCursor, QImage, QPainter, QTransform
+from PyQt6.QtWidgets import QGraphicsScene, QColorDialog, QFileDialog, QMessageBox, QGraphicsPathItem
+from PyQt6.QtGui import QBrush, QColor, QCursor, QImage, QPainter, QTransform, QPainterPath, QPen
 from PyQt6.QtCore import Qt, QRectF
 from editor.items.node import NodeItem
 from editor.items.rectangle import NodeRect
@@ -28,6 +28,9 @@ class DiagramScene(QGraphicsScene):
         self.directed_edge_mode = False
         self._edge_drag_source = None
         self._edge_dragging = False
+        self._edge_drag_start_pos = None
+        self._edge_drag_moved = False
+        self._edge_preview = None
     
     def set_services(self, controller):
         self.controller = controller
@@ -145,9 +148,13 @@ class DiagramScene(QGraphicsScene):
     
     def edge_create_dialog(self, directed):
         if self.creating_edge == 0:
-                self.win.status.setText("Select first node")
-                self.creating_edge = 1
-                self.directed_edge_mode = directed
+            self._set_status("Select a node and drag to another node, or click two nodes")
+            self.creating_edge = 1
+            self.directed_edge_mode = directed
+
+    def _set_status(self, text):
+        if self.win:
+            self.win.status.setText(text)
 
     def node_at(self, position):
         item = self.itemAt(position, QTransform())
@@ -156,35 +163,81 @@ class DiagramScene(QGraphicsScene):
         return item
 
     def begin_edge_drag(self, source, directed):
-        if source.scene() is not self:
+        if source is None or source.scene() is not self:
             return
         self.creating_edge = 0
         self.edge_nodes = [None, None]
         self._edge_drag_source = source
         self._edge_dragging = False
         self.directed_edge_mode = directed
-        if self.win:
-            self.win.status.setText("Drag from source node to target node")
+        self._set_status("Drag from source node to target node")
+
+    def _start_edge_drag(self, source, position):
+        self._edge_drag_source = source
+        self._edge_dragging = True
+        self._edge_drag_start_pos = position
+        self._edge_drag_moved = False
+        preview_path = QPainterPath()
+        preview_path.moveTo(source.sceneBoundingRect().center())
+        preview_path.lineTo(position)
+        self._edge_preview = QGraphicsPathItem(preview_path)
+        self._edge_preview.setPen(QPen(self.current_color_edge, 3, Qt.PenStyle.DashLine))
+        self._edge_preview.setZValue(-0.5)
+        self._edge_preview.setAcceptedMouseButtons(Qt.MouseButton.NoButton)
+        self.addItem(self._edge_preview)
+
+    def _update_edge_preview(self, position):
+        if self._edge_preview is None or self._edge_drag_source is None:
+            return
+        path = QPainterPath()
+        path.moveTo(self._edge_drag_source.sceneBoundingRect().center())
+        path.lineTo(position)
+        self._edge_preview.setPath(path)
+        if self._edge_drag_start_pos is not None:
+            delta = position - self._edge_drag_start_pos
+            self._edge_drag_moved = self._edge_drag_moved or (
+                delta.x() ** 2 + delta.y() ** 2 >= 16
+            )
+
+    def _clear_edge_preview(self):
+        if self._edge_preview is not None:
+            self.removeItem(self._edge_preview)
+            self._edge_preview = None
+
+    def _create_edge(self, source, target):
+        if not self.controller:
+            return
+        if self.directed_edge_mode:
+            edge = DirectedEdgeItem(source, target, self.current_color_edge)
+        else:
+            edge = EdgeItem(source, target, self.current_color_edge)
+        self.controller.add_node(self, edge)
 
     def _finish_edge_drag(self, target):
         source = self._edge_drag_source
+        was_shortcut_mode = self.creating_edge != 0
+        moved = self._edge_drag_moved
+        self._clear_edge_preview()
         self._edge_dragging = False
-        if source is None or target is None:
-            return
-        if target is source:
-            if self.win:
-                self.win.status.setText("Choose a different target node")
-            return
-        if self.controller:
-            if self.directed_edge_mode:
-                edge = DirectedEdgeItem(source, target, self.current_color_edge)
-            else:
-                edge = EdgeItem(source, target, self.current_color_edge)
-            self.controller.add_node(self, edge)
         self._edge_drag_source = None
-        self.directed_edge_mode = False
-        if self.win:
-            self.win.status.setText("idle")
+        self._edge_drag_start_pos = None
+        self._edge_drag_moved = False
+
+        if source is not None and target is not None and target is not source and moved:
+            self._create_edge(source, target)
+            self.creating_edge = 0
+            self.edge_nodes = [None, None]
+            self.directed_edge_mode = False
+            self._set_status("idle")
+        elif was_shortcut_mode and source is not None:
+            self.edge_nodes = [source, None]
+            self.creating_edge = 2
+            self._set_status("Select a different target node")
+        else:
+            self.creating_edge = 0
+            self.edge_nodes = [None, None]
+            self.directed_edge_mode = False
+            self._set_status("idle")
     
     def keyPressEvent(self, event):
         if event.key() == Qt.Key.Key_R:
@@ -231,12 +284,15 @@ class DiagramScene(QGraphicsScene):
             return
         
         elif event.key() == Qt.Key.Key_Escape:
+            self._clear_edge_preview()
             self.creating_edge = 0
             self.edge_nodes = [None, None]
             self._edge_drag_source = None
             self._edge_dragging = False
+            self._edge_drag_start_pos = None
+            self._edge_drag_moved = False
             self.directed_edge_mode = False
-            self.win.status.setText("idle")
+            self._set_status("idle")
             self.clearSelection()
             return
         
@@ -274,7 +330,16 @@ class DiagramScene(QGraphicsScene):
     def mousePressEvent(self, event):
         if self._edge_drag_source is not None:
             if self.node_at(event.scenePos()) is self._edge_drag_source:
-                self._edge_dragging = True
+                self._start_edge_drag(self._edge_drag_source, event.scenePos())
+                event.accept()
+                return
+
+        if self.creating_edge == 1:
+            source = self.node_at(event.scenePos())
+            if source is not None:
+                self.edge_nodes[0] = source
+                self.creating_edge = 2
+                self._start_edge_drag(source, event.scenePos())
                 event.accept()
                 return
 
@@ -285,27 +350,22 @@ class DiagramScene(QGraphicsScene):
                 self.old_pos_list.append(i.pos())
                 self.itemlist.append(i)
         super().mousePressEvent(event)
-        if self.creating_edge == 1:
-            self.edge_nodes[0] = self.itemAt(event.scenePos(), QTransform())
-            if self.edge_nodes[0] and (isinstance(self.edge_nodes[0], NodeItem) or isinstance(self.edge_nodes[0].parentItem(), NodeItem)):
-                self.win.status.setText("Select second node")
-                self.creating_edge = 2
-        elif self.creating_edge == 2:
-            self.edge_nodes[1] = self.itemAt(event.scenePos(), QTransform())
-            if self.edge_nodes[1] and (isinstance(self.edge_nodes[1], NodeItem) or isinstance(self.edge_nodes[1].parentItem(), NodeItem)) and self.edge_nodes[0] != self.edge_nodes[1]:
-                if not isinstance(self.edge_nodes[0], NodeItem):
-                    self.edge_nodes[0] = self.edge_nodes[0].parentItem()
-                if not isinstance(self.edge_nodes[1], NodeItem):
-                    self.edge_nodes[1] = self.edge_nodes[1].parentItem()
-                if self.directed_edge_mode:
-                    edge = DirectedEdgeItem(self.edge_nodes[0], self.edge_nodes[1], self.current_color_edge)
-                else:
-                    edge = EdgeItem(self.edge_nodes[0], self.edge_nodes[1], self.current_color_edge)
-                self.controller.add_node(self, edge)
+        if self.creating_edge == 2:
+            target = self.node_at(event.scenePos())
+            source = self.edge_nodes[0]
+            if target is not None and source is not None and target is not source:
+                self._create_edge(source, target)
             self.directed_edge_mode = False
             self.creating_edge = 0
             self.edge_nodes = [None, None]
-            self.win.status.setText("idle")
+            self._set_status("idle")
+
+    def mouseMoveEvent(self, event):
+        if self._edge_dragging:
+            self._update_edge_preview(event.scenePos())
+            event.accept()
+            return
+        super().mouseMoveEvent(event)
     
     def mouseReleaseEvent(self, event):
         if self._edge_dragging:
