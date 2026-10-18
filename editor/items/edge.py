@@ -1,6 +1,8 @@
 from PyQt6.QtWidgets import QGraphicsPathItem, QGraphicsItem, QGraphicsTextItem, QMenu, QColorDialog, QInputDialog
 from PyQt6.QtGui import QPainterPath, QPen, QColor
+from PyQt6.QtCore import QPointF
 from PyQt6.QtCore import QTimer
+import math
 
 class EdgeItem(QGraphicsPathItem):
     _id_counter = 0
@@ -43,6 +45,38 @@ class EdgeItem(QGraphicsPathItem):
 
         self.setPath(path)
         self.updateLabelPosition()
+        scene = self.scene()
+        if scene and hasattr(scene, "refresh_edge_endpoint_handles"):
+            scene.refresh_edge_endpoint_handles(self)
+
+    def endpoint_handle_position(self, endpoint):
+        node = self.start_node if endpoint == "start" else self.end_node
+        other_node = self.end_node if endpoint == "start" else self.start_node
+        center = node.sceneBoundingRect().center()
+        other_center = other_node.sceneBoundingRect().center()
+        dx = other_center.x() - center.x()
+        dy = other_center.y() - center.y()
+        angle = math.atan2(dy, dx)
+        distance = max(0, node.get_distance_center_border(angle) - 5)
+        return QPointF(
+            center.x() + math.cos(angle) * distance,
+            center.y() + math.sin(angle) * distance,
+        )
+
+    def set_endpoint(self, endpoint, node):
+        if endpoint not in ("start", "end"):
+            raise ValueError(f"Unknown edge endpoint: {endpoint}")
+
+        old_node = getattr(self, f"{endpoint}_node")
+        if old_node is node:
+            return
+
+        if self in old_node.edges:
+            old_node.edges.remove(self)
+        setattr(self, f"{endpoint}_node", node)
+        if self not in node.edges:
+            node.edges.append(self)
+        self.update_position()
 
     def updateLabelPosition(self):
         text_rect = self.label.boundingRect()

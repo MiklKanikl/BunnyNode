@@ -10,6 +10,7 @@ from editor.items.directed_edge import DirectedEdgeItem
 from editor.calculations.dijkstra import shortest_path
 from editor.items.triangle import NodeTriangle
 from editor.path_utils import get_recent_files_path, get_saves_directory
+from editor.ui.components.edge_endpoint_handle import EdgeEndpointHandle
 import os
 import math
 
@@ -32,6 +33,13 @@ class DiagramScene(QGraphicsScene):
         self._edge_drag_start_pos = None
         self._edge_drag_moved = False
         self._edge_preview = None
+        self._edge_endpoint_handles = {}
+        self._edge_reconnect = None
+        self.selectionChanged.connect(self._update_edge_endpoint_handles)
+
+    def clear(self):
+        self._clear_edge_endpoint_handles()
+        super().clear()
     
     def set_services(self, controller):
         self.controller = controller
@@ -59,10 +67,20 @@ class DiagramScene(QGraphicsScene):
         painter = QPainter(image)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         target_rect = QRectF(0, 0, image_width, image_height)
-
-        self.render(painter, target_rect, source_rect)
-
-        painter.end()
+        visible_handles = [
+            handle
+            for handles in self._edge_endpoint_handles.values()
+            for handle in handles.values()
+            if handle.isVisible()
+        ]
+        for handle in visible_handles:
+            handle.hide()
+        try:
+            self.render(painter, target_rect, source_rect)
+        finally:
+            painter.end()
+            for handle in visible_handles:
+                handle.show()
 
         if not image.save(path):
             raise OSError(f"Could not save PNG export to {path}")
@@ -166,10 +184,104 @@ class DiagramScene(QGraphicsScene):
             self.win.status.setText(text)
 
     def node_at(self, position):
-        item = self.itemAt(position, QTransform())
-        while item is not None and not isinstance(item, NodeItem):
-            item = item.parentItem()
-        return item
+        for item in self.items(position, Qt.ItemSelectionMode.IntersectsItemShape, Qt.SortOrder.DescendingOrder, QTransform()):
+            parent = item
+            while parent is not None:
+                if isinstance(parent, NodeItem):
+                    return parent
+                parent = parent.parentItem()
+        return None
+
+    def _clear_edge_endpoint_handles(self):
+        for handles in self._edge_endpoint_handles.values():
+            for handle in handles.values():
+                if handle.scene() is self:
+                    self.removeItem(handle)
+        self._edge_endpoint_handles.clear()
+
+    def _update_edge_endpoint_handles(self):
+        self._clear_edge_endpoint_handles()
+        selected_edges = [
+            item for item in self.selectedItems()
+            if isinstance(item, EdgeItem)
+        ]
+        if len(selected_edges) != 1:
+            return
+
+        edge = selected_edges[0]
+        handles = {}
+        for endpoint in ("start", "end"):
+            handle = EdgeEndpointHandle(edge, endpoint)
+            handle.setPos(edge.endpoint_handle_position(endpoint))
+            self.addItem(handle)
+            handles[endpoint] = handle
+        self._edge_endpoint_handles[edge] = handles
+
+    def refresh_edge_endpoint_handles(self, edge):
+        handles = self._edge_endpoint_handles.get(edge)
+        if not handles:
+            return
+        for endpoint, handle in handles.items():
+            handle.setPos(edge.endpoint_handle_position(endpoint))
+
+    def _start_endpoint_reconnect(self, edge, endpoint, position):
+        self.creating_edge = 0
+        self.edge_nodes = [None, None]
+        self._edge_drag_source = None
+        self.directed_edge_mode = False
+        self._edge_reconnect = (edge, endpoint)
+        self._edge_dragging = True
+        self._edge_drag_start_pos = position
+        self._edge_drag_moved = False
+        fixed_node = edge.end_node if endpoint == "start" else edge.start_node
+        path = QPainterPath()
+        if endpoint == "start":
+            path.moveTo(position)
+            path.lineTo(fixed_node.sceneBoundingRect().center())
+        else:
+            path.moveTo(fixed_node.sceneBoundingRect().center())
+            path.lineTo(position)
+        self._edge_preview = QGraphicsPathItem(path)
+        self._edge_preview.setPen(QPen(edge.color, 3, Qt.PenStyle.DashLine))
+        self._edge_preview.setZValue(999)
+        self._edge_preview.setAcceptedMouseButtons(Qt.MouseButton.NoButton)
+        self.addItem(self._edge_preview)
+
+    def _update_endpoint_reconnect(self, position):
+        edge, endpoint = self._edge_reconnect
+        fixed_node = edge.end_node if endpoint == "start" else edge.start_node
+        path = QPainterPath()
+        if endpoint == "start":
+            path.moveTo(position)
+            path.lineTo(fixed_node.sceneBoundingRect().center())
+        else:
+            path.moveTo(fixed_node.sceneBoundingRect().center())
+            path.lineTo(position)
+        self._edge_preview.setPath(path)
+        delta = position - self._edge_drag_start_pos
+        self._edge_drag_moved = self._edge_drag_moved or (
+            delta.x() ** 2 + delta.y() ** 2 >= 16
+        )
+
+    def _finish_endpoint_reconnect(self, position):
+        edge, endpoint = self._edge_reconnect
+        target = self.node_at(position)
+        self._clear_edge_preview()
+        self._edge_reconnect = None
+        self._edge_dragging = False
+        self._edge_drag_start_pos = None
+        moved = self._edge_drag_moved
+        self._edge_drag_moved = False
+
+        fixed_node = edge.end_node if endpoint == "start" else edge.start_node
+        if moved and target is not None and target is not fixed_node:
+            if self.controller:
+                self.controller.reconnect_edge(edge, endpoint, target)
+            self._set_status(f"Reconnected edge {endpoint}")
+        else:
+            self._set_status("Edge reconnect cancelled")
+        if self.win:
+            self.win.inspectordock.update_inspector(self.get_the_selected_item())
 
     def begin_edge_drag(self, source, directed):
         if source is None or source.scene() is not self:
@@ -300,6 +412,7 @@ class DiagramScene(QGraphicsScene):
             self._edge_dragging = False
             self._edge_drag_start_pos = None
             self._edge_drag_moved = False
+            self._edge_reconnect = None
             self.directed_edge_mode = False
             self._set_status("idle")
             self.clearSelection()
@@ -337,6 +450,19 @@ class DiagramScene(QGraphicsScene):
         super().keyPressEvent(event)
     
     def mousePressEvent(self, event):
+        item = self.itemAt(event.scenePos(), QTransform())
+        if (
+            event.button() == Qt.MouseButton.LeftButton
+            and isinstance(item, EdgeEndpointHandle)
+        ):
+            self._start_endpoint_reconnect(
+                item.edge,
+                item.endpoint,
+                event.scenePos(),
+            )
+            event.accept()
+            return
+
         if self._edge_drag_source is not None:
             if self.node_at(event.scenePos()) is self._edge_drag_source:
                 self._start_edge_drag(self._edge_drag_source, event.scenePos())
@@ -370,6 +496,10 @@ class DiagramScene(QGraphicsScene):
             self._set_status("idle")
 
     def mouseMoveEvent(self, event):
+        if self._edge_reconnect is not None:
+            self._update_endpoint_reconnect(event.scenePos())
+            event.accept()
+            return
         if self._edge_dragging:
             self._update_edge_preview(event.scenePos())
             event.accept()
@@ -377,6 +507,10 @@ class DiagramScene(QGraphicsScene):
         super().mouseMoveEvent(event)
     
     def mouseReleaseEvent(self, event):
+        if self._edge_reconnect is not None:
+            self._finish_endpoint_reconnect(event.scenePos())
+            event.accept()
+            return
         if self._edge_dragging:
             self._finish_edge_drag(self.node_at(event.scenePos()))
             event.accept()
@@ -518,6 +652,14 @@ class DiagramScene(QGraphicsScene):
                 edge_id = edge_update.get("id")
                 edge = self.find_edge_by_id(edge_id)
                 if edge:
+                    if 'start' in edge_update:
+                        start_node = self.find_node_by_id(edge_update['start'])
+                        if start_node:
+                            edge.set_endpoint("start", start_node)
+                    if 'end' in edge_update:
+                        end_node = self.find_node_by_id(edge_update['end'])
+                        if end_node:
+                            edge.set_endpoint("end", end_node)
                     if 'color' in edge_update:
                         edge.apply_color(QColor(edge_update['color'][0], edge_update['color'][1], edge_update['color'][2]))
                     if 'text_color' in edge_update:

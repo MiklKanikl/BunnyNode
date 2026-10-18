@@ -4,9 +4,7 @@ from PyQt6.QtWidgets import QDockWidget, QListWidget, QListWidgetItem
 
 from editor.resources import icon
 
-
 CREATE_ITEM_MIME_TYPE = "application/x-bunnynode-create-item"
-
 
 class _CreateListWidget(QListWidget):
     def startDrag(self, _supported_actions):
@@ -23,7 +21,6 @@ class _CreateListWidget(QListWidget):
         drag.setMimeData(mime_data)
         drag.setPixmap(item.icon().pixmap(32, 32))
         drag.exec(Qt.DropAction.CopyAction)
-
 
 class Createdock(QDockWidget):
     def __init__(self, parent=None):

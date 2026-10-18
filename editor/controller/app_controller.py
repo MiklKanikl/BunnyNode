@@ -5,6 +5,7 @@ from editor.commands.load_image_command import LoadImageCommand
 from editor.commands.move_node import MoveNodeCommand
 from editor.commands.rename_node import RenameNodeCommand
 from editor.commands.rename_edge import RenameEdgeCommand
+from editor.commands.reconnect_edge import ReconnectEdgeCommand
 from editor.commands.change_color import ChangeColorCommand
 from editor.commands.change_text_color import ChangeTextColorCommand
 from editor.commands.resize_node import ResizeNodeCommand
@@ -82,6 +83,19 @@ class AppController:
         cmd = RenameEdgeCommand(edge, old_text, new_text)
         edgedata = edge.to_dict()
         edgedata["text"] = new_text
+        self.changes = {
+            'type': 'edges_modified',
+            'edges': [edgedata]
+        }
+        self.push_command(cmd)
+
+    def reconnect_edge(self, edge, endpoint, new_node):
+        old_node = getattr(edge, f"{endpoint}_node")
+        if old_node is new_node:
+            return
+        cmd = ReconnectEdgeCommand(edge, endpoint, old_node, new_node)
+        edgedata = edge.to_dict()
+        edgedata[endpoint] = new_node.id
         self.changes = {
             'type': 'edges_modified',
             'edges': [edgedata]
