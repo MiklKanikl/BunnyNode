@@ -186,6 +186,7 @@ class InspectorDock(QDockWidget):
         
         self.position_group.setVisible(True)
         self.color_group.setVisible(True)
+        self.position_group.setVisible(is_node and not is_edge)
         self.size_group.setVisible(is_node and not is_edge)
         self.text_group.setVisible(is_node and not is_edge)
         self.edge_group.setVisible(is_edge)
