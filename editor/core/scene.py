@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QGraphicsScene, QColorDialog, QFileDialog, QMessageBox, QGraphicsPathItem
 from PyQt6.QtGui import QBrush, QColor, QCursor, QImage, QPainter, QTransform, QPainterPath, QPen
-from PyQt6.QtCore import Qt, QRectF
+from PyQt6.QtCore import Qt, QRectF, QTimer
 from editor.items.node import NodeItem
 from editor.items.rectangle import NodeRect
 from editor.items.ellipse import NodeEllipse
@@ -14,9 +14,11 @@ from editor.ui.components.edge_endpoint_handle import EdgeEndpointHandle
 import os
 import math
 
+AUTO_SAVE_INTERVAL_MS = 60 * 1000
+
 class DiagramScene(QGraphicsScene):
     def __init__(self):
-        super().__init__()
+        super().__init__() 
         self.setSceneRect(0, 0, 3000, 3000)
         self.current_color = QColor(0, 150, 255)
         self.current_color_edge = QColor(0, 0, 0)
@@ -36,9 +38,17 @@ class DiagramScene(QGraphicsScene):
         self._edge_endpoint_handles = {}
         self._edge_reconnect = None
         self.selectionChanged.connect(self._update_edge_endpoint_handles)
+        self.auto_save_timer = QTimer(self)
+        self.auto_save_timer.setInterval(AUTO_SAVE_INTERVAL_MS)
+        self.auto_save_timer.setSingleShot(True)
+        self.auto_save_timer.timeout.connect(self._auto_save)
+        self.auto_save_timer.start()
+        self.auto_save_file = ""
+        self.online_mode = False
 
     def clear(self):
         self._clear_edge_endpoint_handles()
+        self.auto_save_file = ""
         super().clear()
     
     def set_services(self, controller):
@@ -121,15 +131,17 @@ class DiagramScene(QGraphicsScene):
         if self.controller:
             self.controller.add_node(self, image)
     
-    def save_file_dialog(self):
-        filename, _ = QFileDialog.getSaveFileName(
-            self.win,
-            "Save Diagram",
-            os.path.join(get_saves_directory(), "diagram.diagram"),
-            "BunnyNode diagrams (*.diagram)",
-        )
-        if not filename:
-            return
+    def save_file_dialog(self, save_as=False):
+        filename = self.auto_save_file
+        if save_as or not filename:
+            filename, _ = QFileDialog.getSaveFileName(
+                self.win,
+                "Save Diagram",
+                os.path.join(get_saves_directory(), "diagram.diagram"),
+                "BunnyNode diagrams (*.diagram)",
+            )
+            if not filename:
+                return
 
         if not filename.lower().endswith(".diagram"):
             filename += ".diagram"
@@ -141,6 +153,30 @@ class DiagramScene(QGraphicsScene):
             )
             return
         self.update_recent_files(filename)
+
+    def set_online_mode(self, online):
+        self.online_mode = online
+        if online:
+            self.auto_save_timer.stop()
+        elif not self.auto_save_timer.isActive():
+            self.auto_save_timer.start()
+
+    def _auto_save(self):
+        if self.online_mode:
+            return
+
+        try:
+            if self.auto_save_file:
+                self.save_scene(filename=self.auto_save_file)
+        except OSError as error:
+            QMessageBox.critical(
+                self.win,
+                "Auto-save Failed",
+                f"Could not auto-save the diagram:\n{error}",
+            )
+        finally:
+            if not self.online_mode:
+                self.auto_save_timer.start()
     
     def load_file_dialog(self):
         folder = get_saves_directory()
@@ -539,7 +575,7 @@ class DiagramScene(QGraphicsScene):
                 itemlist.append(item)
         self.controller.delete_node(self, itemlist)
 
-    def save_scene(self, online=False, filename=""):
+    def save_scene(self, filename="", online=False):
         data = {
             "type": "full_state",
             "nodes": [],
@@ -557,12 +593,15 @@ class DiagramScene(QGraphicsScene):
         else:
             with open(filename, "w") as f:
                 json.dump(data, f, indent=4)
+            self.auto_save_file = filename
     
-    def load_scene(self, online=False, filename="", data={}):
+    def load_scene(self, filename="", online=False, data=None):
         import json
         if not online:
             with open(filename, "r") as f:
                 data = json.load(f)
+        elif data is None:
+            data = {}
 
         self.clear()
         id_map = {"nodes": {}, "edges": {}}
@@ -591,6 +630,9 @@ class DiagramScene(QGraphicsScene):
                     self.controller.add_node(self, edge)
                 elif online:
                     self.addItem(edge)
+
+        if not online:
+            self.auto_save_file = filename
 
     def apply_delta(self, changes):
         if not isinstance(changes, dict):

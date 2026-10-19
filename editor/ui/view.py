@@ -40,6 +40,9 @@ class DiagramView(QGraphicsView):
 
     def save_diagram(self):
         self.scene().save_file_dialog()
+
+    def save_diagram_as(self):
+        self.scene().save_file_dialog(save_as=True)
     
     def load_a_diagram(self, popup=True):
         self.scene().controller.clear_history()

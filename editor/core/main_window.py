@@ -31,6 +31,7 @@ class EditorWindow(QMainWindow):
         self.create_docks()
         self.hide_bars()
         self.online = False
+        self.view.scene().set_online_mode(False)
         self.token = None
         self.client = Client()
         self.client.connection_ready.connect(self.on_connection_ready)
@@ -176,6 +177,10 @@ class EditorWindow(QMainWindow):
         file_menu.addAction(save)
         save.triggered.connect(self.view.save_diagram)
 
+        save_as = QAction(QIcon(icon("save.png")), "Save As", self)
+        file_menu.addAction(save_as)
+        save_as.triggered.connect(self.view.save_diagram_as)
+
         load = QAction(QIcon(icon("load.png")), "Load", self)
         file_menu.addAction(load)
         load.triggered.connect(lambda: self.view.load_a_diagram(True))
@@ -265,6 +270,7 @@ class EditorWindow(QMainWindow):
         if self.client.create_room():
             self.token = self.client.room_id
             self.online = False
+            self.view.scene().set_online_mode(False)
             self.stacked_widget.setCurrentWidget(self.view)
             self.show_bars()
             self.status.setText(f"Connecting to room {self.token}...")
@@ -317,11 +323,13 @@ class EditorWindow(QMainWindow):
                 self.status.setText("Connection ready")
         else:
             self.online = False
+            self.view.scene().set_online_mode(False)
             self.status.setText("Connection lost")
     
     def on_room_joined(self, data):
         self.token = data.get('room')
         self.online = True
+        self.view.scene().set_online_mode(True)
         version = data.get('version', 0)
         nodes = data.get('nodes', [])
         edges = data.get('edges', [])
