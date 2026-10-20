@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QGraphicsScene, QColorDialog, QFileDialog, QMessageBox, QGraphicsPathItem
 from PyQt6.QtGui import QBrush, QColor, QCursor, QImage, QPainter, QTransform, QPainterPath, QPen
-from PyQt6.QtCore import Qt, QRectF, QTimer
+from PyQt6.QtCore import Qt, QRectF, QTimer, pyqtSignal
 from editor.items.node import NodeItem
 from editor.items.rectangle import NodeRect
 from editor.items.ellipse import NodeEllipse
@@ -17,6 +17,8 @@ import math
 AUTO_SAVE_INTERVAL_MS = 60 * 1000
 
 class DiagramScene(QGraphicsScene):
+    save_file_changed = pyqtSignal(str)
+
     def __init__(self):
         super().__init__() 
         self.setSceneRect(0, 0, 3000, 3000)
@@ -50,6 +52,7 @@ class DiagramScene(QGraphicsScene):
         self._clear_edge_endpoint_handles()
         self.auto_save_file = ""
         super().clear()
+        self.save_file_changed.emit(self.auto_save_file)
     
     def set_services(self, controller):
         self.controller = controller
@@ -161,6 +164,16 @@ class DiagramScene(QGraphicsScene):
         elif not self.auto_save_timer.isActive():
             self.auto_save_timer.start()
 
+    def has_unsaved_changes(self):
+        if self.online_mode:
+            return False
+        if self.auto_save_file:
+            return bool(
+                self.controller
+                and not self.controller.undostack.isClean()
+            )
+        return any(isinstance(item, (NodeItem, EdgeItem)) for item in self.items())
+
     def _auto_save(self):
         if self.online_mode:
             return
@@ -194,7 +207,10 @@ class DiagramScene(QGraphicsScene):
     def load_popup(self):
         popup = QMessageBox()
         popup.setWindowTitle("Warning")
-        popup.setText("Do you want to load a new diagram? All unsaved changes will be lost.")
+        text = "Do you want to load a new diagram?"
+        if self.has_unsaved_changes():
+            text += " All unsaved changes will be lost."
+        popup.setText(text)
         popup.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
         if popup.exec() == QMessageBox.StandardButton.Yes:
             self.load_file_dialog()
@@ -594,6 +610,9 @@ class DiagramScene(QGraphicsScene):
             with open(filename, "w") as f:
                 json.dump(data, f, indent=4)
             self.auto_save_file = filename
+            if self.controller:
+                self.controller.undostack.setClean()
+            self.save_file_changed.emit(self.auto_save_file)
     
     def load_scene(self, filename="", online=False, data=None):
         import json
@@ -603,6 +622,8 @@ class DiagramScene(QGraphicsScene):
         elif data is None:
             data = {}
 
+        if not online and self.controller:
+            self.controller.clear_history()
         self.clear()
         id_map = {"nodes": {}, "edges": {}}
 
@@ -633,6 +654,9 @@ class DiagramScene(QGraphicsScene):
 
         if not online:
             self.auto_save_file = filename
+            if self.controller:
+                self.controller.undostack.setClean()
+            self.save_file_changed.emit(self.auto_save_file)
 
     def apply_delta(self, changes):
         if not isinstance(changes, dict):

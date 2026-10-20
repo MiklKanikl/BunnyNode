@@ -1,3 +1,5 @@
+import os
+
 from PyQt6.QtWidgets import QInputDialog, QMainWindow, QMessageBox, QStatusBar, QLabel, QStackedWidget, QVBoxLayout, QWidget
 from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtCore import Qt
@@ -26,11 +28,16 @@ class EditorWindow(QMainWindow):
         self.settings_menu = Settings_menu(self)
         self.stacked_widget.addWidget(self.settings_menu)
         self.build_menubar()
+        self.online = False
+        self.view.scene().save_file_changed.connect(self.update_filename_label)
+        self.controller.undostack.cleanChanged.connect(
+            lambda _clean: self.update_filename_label(self.view.scene().auto_save_file)
+        )
+        self.update_filename_label(self.view.scene().auto_save_file)
         self.build_toolbar()
         self.build_statusbar()
         self.create_docks()
         self.hide_bars()
-        self.online = False
         self.view.scene().set_online_mode(False)
         self.token = None
         self.client = Client()
@@ -142,7 +149,6 @@ class EditorWindow(QMainWindow):
         redo_action.setEnabled(self.controller.undostack.canRedo())
         self.controller.undostack.canUndoChanged.connect(undo_action.setEnabled)
         self.controller.undostack.canRedoChanged.connect(redo_action.setEnabled)
-        show_token_action = QAction("Show Token", self)
         undo_action.setIcon(QIcon(icon("undo.png")))
         redo_action.setIcon(QIcon(icon("redo.png")))
         undo_action.setShortcut("Ctrl+Z")
@@ -150,8 +156,6 @@ class EditorWindow(QMainWindow):
         self.toolbar = self.addToolBar("Edit")
         self.toolbar.addAction(undo_action)
         self.toolbar.addAction(redo_action)
-        self.toolbar.addAction(show_token_action)
-        show_token_action.triggered.connect(self.show_token)
     
     def build_menubar(self):
         self.menu = self.menuBar()
@@ -160,6 +164,8 @@ class EditorWindow(QMainWindow):
         actions_menu = self.menu.addMenu("&Actions")
         calc_menu = self.menu.addMenu("&Calc")
         other_menu = self.menu.addMenu("&Other")
+
+        self.create_filname_label()
 
         change_node_color = QAction("Change Node Color", self)
         actions_menu.addAction(change_node_color)
@@ -204,11 +210,47 @@ class EditorWindow(QMainWindow):
         settings = QAction(QIcon(icon("settings.png")), "Settings", self)
         other_menu.addAction(settings)
         settings.triggered.connect(self.open_settings)
+
+    def create_filname_label(self):
+        self.filename_label = QLabel()
+        self.filename_label.setAlignment(
+            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
+        )
+        self.filename_label.setContentsMargins(0, 8, 12, 0)
+        self.menu.setCornerWidget(self.filename_label, Qt.Corner.TopRightCorner)
+
+    def delete_filename_label(self):
+        if hasattr(self, 'filename_label'):
+            self.menu.setCornerWidget(None, Qt.Corner.TopRightCorner)
+            self.filename_label.deleteLater()
+            self.filename_label = None
+
+    def update_filename_label(self, filename):
+        scene = self.view.scene()
+        if self.online:
+            label = f"Room {self.token}" if self.token is not None else ""
+            tooltip = f"Room token: {self.token}" if self.token is not None else ""
+        else:
+            label = os.path.basename(filename) if filename else ""
+            tooltip = filename
+            if scene.has_unsaved_changes():
+                label += "*"
+                if not filename:
+                    tooltip = "Unsaved diagram"
+
+        self.delete_filename_label()
+        self.create_filname_label()
+        self.filename_label.setText(label)
+        self.filename_label.setToolTip(tooltip)
+        self.filename_label.setVisible(bool(label))
     
     def exit_popup(self, action):
         popup = QMessageBox()
         popup.setWindowTitle("Warning")
-        popup.setText("Are you sure you want to exit? All unsaved changes will be lost.")
+        text = "Are you sure you want to exit?"
+        if self.view.scene().has_unsaved_changes():
+            text += " All unsaved changes will be lost."
+        popup.setText(text)
         popup.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
         if popup.exec() == QMessageBox.StandardButton.Yes:
             if action == 0:
@@ -242,14 +284,16 @@ class EditorWindow(QMainWindow):
         self.inspectordock.raise_()
     
     def back_to_welcome(self):
+        self.online = False
+        self.token = None
+        self.view.scene().set_online_mode(False)
         self.view.scene().clear()
         self.view.scene().controller.clear_history()
         self.stacked_widget.setCurrentWidget(self.welcome_screen)
         self.hide_bars()
-        self.online = False
-        self.token = None
         self.welcome_screen.reload_recent_files()
         self.client.leave_room()
+        self.update_filename_label(self.view.scene().auto_save_file)
     
     def open_settings(self):
         self.settings_menu.load_settings()
@@ -258,6 +302,7 @@ class EditorWindow(QMainWindow):
     
     def new_diagram(self):
         self.view.scene().clear()
+        self.controller.clear_history()
         self.stacked_widget.setCurrentWidget(self.view)
         self.show_bars()
     
@@ -308,13 +353,6 @@ class EditorWindow(QMainWindow):
         self.toolbar.hide()
         self.statusBar().hide()
     
-    def show_token(self):
-        if self.online and self.token:
-            t = str(self.token)
-        else:
-            t = "not in online mode"
-        QMessageBox.information(self, "Room Token", f"Current Room Token:\n{t}")
-    
     def on_connection_ready(self, ready):
         if ready:
             if self.token and not self.online:
@@ -325,6 +363,7 @@ class EditorWindow(QMainWindow):
             self.online = False
             self.view.scene().set_online_mode(False)
             self.status.setText("Connection lost")
+        self.update_filename_label(self.view.scene().auto_save_file)
     
     def on_room_joined(self, data):
         self.token = data.get('room')
@@ -338,6 +377,7 @@ class EditorWindow(QMainWindow):
         self.stacked_widget.setCurrentWidget(self.view)
         self.show_bars()
         self.status.setText(f"Online: Room {self.token} (v{version})")
+        self.update_filename_label(self.view.scene().auto_save_file)
     
     def on_scene_updated(self, data):
         try:

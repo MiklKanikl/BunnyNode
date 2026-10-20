@@ -45,7 +45,6 @@ class DiagramView(QGraphicsView):
         self.scene().save_file_dialog(save_as=True)
     
     def load_a_diagram(self, popup=True):
-        self.scene().controller.clear_history()
         if popup:
             self.scene().load_popup()
         else:
