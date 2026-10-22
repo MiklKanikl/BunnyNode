@@ -245,14 +245,26 @@ class EditorWindow(QMainWindow):
         self.filename_label.setVisible(bool(label))
     
     def exit_popup(self, action):
-        popup = QMessageBox()
-        popup.setWindowTitle("Warning")
-        text = "Are you sure you want to exit?"
         if self.view.scene().has_unsaved_changes():
-            text += " All unsaved changes will be lost."
-        popup.setText(text)
-        popup.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-        if popup.exec() == QMessageBox.StandardButton.Yes:
+            popup = QMessageBox()
+            popup.setWindowTitle("Warning")
+            text = "You have unsaved changes. Do you want to save them before proceeding?"
+            popup.setText(text)
+            popup.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No | QMessageBox.StandardButton.Cancel)
+            if popup.exec() == QMessageBox.StandardButton.Yes:
+                self.view.save_diagram()
+                if action == 0:
+                    self.new_diagram()
+                elif action == 1:
+                    self.back_to_welcome()
+            elif popup.exec() == QMessageBox.StandardButton.No:
+                if action == 0:
+                    self.new_diagram()
+                elif action == 1:
+                    self.back_to_welcome()
+            else:
+                pass
+        else:
             if action == 0:
                 self.new_diagram()
             elif action == 1:
@@ -411,5 +423,17 @@ class EditorWindow(QMainWindow):
         self.status.setText("Error occurred")
     
     def closeEvent(self, event):
+        if self.view.scene().has_unsaved_changes():
+            reply = QMessageBox.question(
+                self,
+                "Unsaved Changes",
+                "You have unsaved changes. Do you want to save before proceeding?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No | QMessageBox.StandardButton.Cancel
+            )
+            if reply == QMessageBox.StandardButton.Yes:
+                self.view.save_diagram()
+            elif reply == QMessageBox.StandardButton.Cancel:
+                event.ignore()
+                return
         self.client.disconnect()
         event.accept()

@@ -205,14 +205,24 @@ class DiagramScene(QGraphicsScene):
             self.update_recent_files(filename)
     
     def load_popup(self):
-        popup = QMessageBox()
-        popup.setWindowTitle("Warning")
-        text = "Do you want to load a new diagram?"
         if self.has_unsaved_changes():
-            text += " All unsaved changes will be lost."
-        popup.setText(text)
-        popup.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-        if popup.exec() == QMessageBox.StandardButton.Yes:
+            reply = QMessageBox.question(
+                self.win,
+                "Unsaved Changes",
+                "You have unsaved changes. Do you want to save before loading a new diagram?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No | QMessageBox.StandardButton.Cancel
+            )
+            if reply == QMessageBox.StandardButton.Yes:
+                if not self.auto_save_file:
+                    self.save_file_dialog(save_as=True)
+                else:
+                    self.save_scene(filename=self.auto_save_file)
+                self.load_file_dialog()
+            elif reply == QMessageBox.StandardButton.No:
+                self.load_file_dialog()
+            else:
+                return
+        else:
             self.load_file_dialog()
     
     def color_dialog(self, item_type):
