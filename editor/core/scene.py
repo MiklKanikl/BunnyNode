@@ -806,7 +806,7 @@ class DiagramScene(QGraphicsScene):
             edge.apply_text_color(QColor(*data['text_color']))
         return edge
     
-    def update_recent_files(self, filename):
+    def update_recent_files(self, filename=""):
         import json
         recent_files_path = get_recent_files_path()
         
@@ -815,11 +815,14 @@ class DiagramScene(QGraphicsScene):
                 recent_files = json.load(f)
         except FileNotFoundError:
             recent_files = []
-        
-        if filename in recent_files:
-            recent_files.remove(filename)
-        recent_files.insert(0, filename)
-        recent_files = recent_files[:10]
+
+        recent_files = [fil for fil in recent_files if os.path.exists(fil)]
+
+        if filename != "":
+            if filename in recent_files:
+                recent_files.remove(filename)
+            recent_files.insert(0, filename)
+            recent_files = recent_files[:10]
 
         with open(recent_files_path, "w") as f:
             json.dump(recent_files, f, indent=4)

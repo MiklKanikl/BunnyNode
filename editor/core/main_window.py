@@ -20,11 +20,12 @@ class EditorWindow(QMainWindow):
         self.setWindowIcon(QIcon(icon("window.png")))
         self.stacked_widget = QStackedWidget()
         self.setCentralWidget(self.stacked_widget)
+        self.view = view
         self.welcome_screen = WelcomeScreen(self)
         self.stacked_widget.addWidget(self.welcome_screen)
-        self.view = view
         self.stacked_widget.addWidget(view)
         self.controller = AppController()
+        self.view.scene().update_recent_files()
         self.settings_menu = Settings_menu(self)
         self.stacked_widget.addWidget(self.settings_menu)
         self.build_menubar()
@@ -296,6 +297,7 @@ class EditorWindow(QMainWindow):
         self.inspectordock.raise_()
     
     def back_to_welcome(self):
+        self.view.scene().update_recent_files()
         self.online = False
         self.token = None
         self.view.scene().set_online_mode(False)

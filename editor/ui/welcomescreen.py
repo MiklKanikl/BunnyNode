@@ -127,6 +127,7 @@ class WelcomeScreen(QWidget):
         self.parent.open_recent_file(item.text())
     
     def load_recent_files(self):
+        self.parent.view.scene().update_recent_files()
         import json
         recent_files_path = get_recent_files_path()
         with open(recent_files_path, "r") as f:
