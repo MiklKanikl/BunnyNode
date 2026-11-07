@@ -134,6 +134,11 @@ class InspectorDock(QDockWidget):
         self.edge_width_spin.setRange(1, 50)
         self.edge_width_spin.editingFinished.connect(self._on_edge_width_changed)
         edge_layout.addWidget(self.edge_width_spin, 2, 1)
+
+        edge_layout.addWidget(QLabel("weight:"), 3, 0)
+        self.edge_weight_spin = QSpinBox()
+        self.edge_weight_spin.editingFinished.connect(self._on_edge_weight_changed)
+        edge_layout.addWidget(self.edge_weight_spin, 3, 1)
         
         self.edge_group.setLayout(edge_layout)
         self.main_layout.addWidget(self.edge_group)
@@ -255,6 +260,10 @@ class InspectorDock(QDockWidget):
         self.edge_width_spin.blockSignals(True)
         self.edge_width_spin.setValue(self.current_item.p_width)
         self.edge_width_spin.blockSignals(False)
+
+        self.edge_weight_spin.blockSignals(True)
+        self.edge_weight_spin.setValue(self.current_item.weight)
+        self.edge_weight_spin.blockSignals(False)
     
     def _on_position_changed(self):
         if not self.current_item:
@@ -314,6 +323,12 @@ class InspectorDock(QDockWidget):
             return
         
         self.controller.resize_edge(self.current_item, self.current_item.p_width, self.edge_width_spin.value())
+
+    def _on_edge_weight_changed(self):
+        if not self.current_item or not hasattr(self.current_item, 'weight'):
+            return
+
+        self.controller.change_weight(self.current_item, self.current_item.weight, self.edge_weight_spin.value())
     
     def _clear_inspector(self):
         self.type_label.setText("None")
@@ -324,6 +339,7 @@ class InspectorDock(QDockWidget):
         self.height_spin.blockSignals(True)
         self.text_input.blockSignals(True)
         self.edge_width_spin.blockSignals(True)
+        self.edge_weight_spin.blockSignals(True)
         
         self.x_spin.setValue(0)
         self.y_spin.setValue(0)
@@ -331,6 +347,7 @@ class InspectorDock(QDockWidget):
         self.height_spin.setValue(5)
         self.text_input.setText("")
         self.edge_width_spin.setValue(1)
+        self.edge_weight_spin.setValue(1)
         self.color_display.setStyleSheet("background-color: white; border: 1px solid black;")
         self.text_color_display.setStyleSheet("background-color: black; border: 1px solid black;")
         
@@ -340,6 +357,7 @@ class InspectorDock(QDockWidget):
         self.height_spin.blockSignals(False)
         self.text_input.blockSignals(False)
         self.edge_width_spin.blockSignals(False)
+        self.edge_weight_spin.blockSignals(False)
 
         self.position_group.setVisible(False)
         self.color_group.setVisible(False)

@@ -11,6 +11,7 @@ from editor.commands.change_text_color import ChangeTextColorCommand
 from editor.commands.resize_node import ResizeNodeCommand
 from editor.commands.resize_edge import ResizeEdgeCommand
 from editor.commands.change_z_order import ChangeZOrderCommand
+from editor.commands.change_weight import ChangeWeightCommand
 from editor.commands.paste_command import PasteCommand
 from editor.controller.clipboard_controller import ClipboardController
 from editor.items.node import NodeItem
@@ -133,6 +134,16 @@ class AppController:
                 'edges': [itemdata]
             }
         self.push_command(cmd)
+
+    def change_weight(self, item, old_weight, new_weight):
+        cmd = ChangeWeightCommand(item, old_weight, new_weight)
+        itemdata = item.to_dict()
+        itemdata["weight"] = new_weight
+        self.changes = {
+            'type': 'edges_modified',
+            'edges': [itemdata]
+        }
+        self.push_command(cmd)
     
     def resize_node(self, node, old_width, old_height, new_width, new_height):
         cmd = ResizeNodeCommand(node, old_width, old_height, new_width, new_height)
@@ -163,12 +174,10 @@ class AppController:
         z_values = [candidate.zValue() for candidate in graph_items if candidate is not item]
         if to_front:
             new_z_value = max(z_values, default=item.zValue()) + 1
-            command_text = "Bring to Front"
         else:
             new_z_value = min(z_values, default=item.zValue()) - 1
-            command_text = "Send to Back"
 
-        cmd = ChangeZOrderCommand(item, item.zValue(), new_z_value, command_text)
+        cmd = ChangeZOrderCommand(item, item.zValue(), new_z_value)
         item_data = item.to_dict()
         item_data["z_value"] = new_z_value
         if isinstance(item, NodeItem):

@@ -202,11 +202,15 @@ class EditorWindow(QMainWindow):
 
         dist = QAction(QIcon(icon("distance.png")), "Distance", self)
         calc_menu.addAction(dist)
-        dist.triggered.connect(lambda: self.view.compute_distance(unweighted=False))
+        dist.triggered.connect(lambda: self.view.compute_distance())
 
         dist_unweighted = QAction(QIcon(icon("distance.png")), "Distance Unweighted", self)
         calc_menu.addAction(dist_unweighted)
-        dist_unweighted.triggered.connect(lambda: self.view.compute_distance(unweighted=True))
+        dist_unweighted.triggered.connect(lambda: self.view.compute_distance(weighting_type="none"))
+
+        dist_custom = QAction(QIcon(icon("distance.png")), "Custom Distance", self)
+        calc_menu.addAction(dist_custom)
+        dist_custom.triggered.connect(lambda: self.view.compute_distance(weighting_type="custom"))
 
         settings = QAction(QIcon(icon("settings.png")), "Settings", self)
         other_menu.addAction(settings)

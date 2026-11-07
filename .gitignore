@@ -17,8 +17,5 @@ __pycache__/
 # ?
 .DS_store
 
-# Dev only
-tasks.md
-
 # local storage files
 local_storage/

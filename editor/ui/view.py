@@ -138,8 +138,8 @@ class DiagramView(QGraphicsView):
         event.setDropAction(Qt.DropAction.CopyAction)
         event.accept()
     
-    def compute_distance(self, unweighted=False):
-        self.scene().setup_path_compution(unweighted=unweighted)
+    def compute_distance(self, weighting_type=""):
+        self.scene().setup_path_compution(weighting_type=weighting_type)
 
     # ZOOM
     def wheelEvent(self, event):

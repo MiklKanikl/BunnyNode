@@ -7,13 +7,14 @@ import math
 class EdgeItem(QGraphicsPathItem):
     _id_counter = 0
 
-    def __init__(self, start_node, end_node, color=QColor(0, 0, 0), path_width=6, custom_param=[], text=""):
+    def __init__(self, start_node, end_node, color=QColor(0, 0, 0), path_width=6, weight=1, custom_param=[], text=""):
         super().__init__()
         self.id = EdgeItem._id_counter
         EdgeItem._id_counter += 1
         self.start_node = start_node
         self.end_node = end_node
         self.directed = False
+        self.weight = weight
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable, True)
 
         start_node.edges.append(self)
@@ -133,6 +134,9 @@ class EdgeItem(QGraphicsPathItem):
             return
         
         self.scene().controller.change_color(self, self.color, new_color)
+
+    def update_weight(self, weight):
+        self.scene().controller.change_weight(self, self.weight, weight)
     
     def apply_color(self, color: QColor):
         self.color = QColor(color)
@@ -177,6 +181,7 @@ class EdgeItem(QGraphicsPathItem):
         color_action = menu.addAction("Change color")
         text_color_action = menu.addAction("Change Text Color")
         width_action = menu.addAction("Change width")
+        weight_action = menu.addAction("Change weight")
         bring_to_front_action = menu.addAction("Bring to Front")
         send_to_back_action = menu.addAction("Send to Back")
 
@@ -207,6 +212,13 @@ class EdgeItem(QGraphicsPathItem):
                 scene.controller.resize_edge(self, self.p_width, new_width)
             return
 
+        if action == weight_action:
+            new_weight, ok = QInputDialog.getInt(
+                None, "Change weight", "Weight: "
+            )
+            if ok:
+                self.update_weight(new_weight)
+
         if action == bring_to_front_action:
             scene.controller.change_z_order(self, to_front=True)
             return
@@ -229,6 +241,7 @@ class EdgeItem(QGraphicsPathItem):
             'z_value': self.zValue(),
             'color': [self.color.red(), self.color.green(), self.color.blue()],
             'text_color': [self.text_color.red(), self.text_color.green(), self.text_color.blue()],
+            'weight': self.weight,
             'width': self.p_width,
             'directed': self.directed,
             'text': self.text

@@ -742,6 +742,8 @@ class DiagramScene(QGraphicsScene):
                         edge.apply_text_color(QColor(*edge_update['text_color']))
                     if 'width' in edge_update:
                         edge.apply_width(edge_update['width'])
+                    if 'weight' in edge_update:
+                        edge.weight = edge_update['weight']
                     if 'text' in edge_update:
                         edge.apply_text(edge_update['text'])
                     if 'z_value' in edge_update:
@@ -796,9 +798,9 @@ class DiagramScene(QGraphicsScene):
 
     def create_edge_from_data(self, data):
         if data["directed"]:
-            edge = DirectedEdgeItem(data["start"], data["end"], QColor(data["color"][0], data["color"][1], data["color"][2]), data["width"], text=data.get("text", ""))
+            edge = DirectedEdgeItem(data["start"], data["end"], QColor(data["color"][0], data["color"][1], data["color"][2]), data["width"], weight=data.get("weight", 1), text=data.get("text", ""))
         else:
-            edge = EdgeItem(data["start"], data["end"], QColor(data["color"][0], data["color"][1], data["color"][2]), data["width"], text=data.get("text", ""))
+            edge = EdgeItem(data["start"], data["end"], QColor(data["color"][0], data["color"][1], data["color"][2]), data["width"], weight=data.get("weight", 1), text=data.get("text", ""))
 
         edge.id = data["id"]
         edge.setZValue(data.get('z_value', edge.zValue()))
@@ -850,6 +852,17 @@ class DiagramScene(QGraphicsScene):
                     g[i.end_node].append((i.start_node, dist))
         return g
 
+    def custom_weighted_graph(self):
+        g = {}
+        for i in self.items():
+            if isinstance(i, NodeItem):
+                g[i] = []
+            elif isinstance(i, EdgeItem):
+                g[i.start_node].append([i.end_node, i.weight])
+                if not getattr(i, 'directed', False):
+                    g[i.end_node].append([i.start_node, i.weight])
+        return g
+
     def unweighted_graph(self):
         g = {}
         for i in self.items():
@@ -864,19 +877,24 @@ class DiagramScene(QGraphicsScene):
     def show_distance(self, text):
         self.win.calcdock.dist_label.setText(text)
     
-    def compute_shortest(self, a, b, unweighted):
-        if unweighted:
+    def compute_shortest(self, a, b, weighting_type):
+        distance_prefix = ""
+        if weighting_type == "none":
+            distance_prefix = "unweighted "
             g = self.unweighted_graph()
+        elif weighting_type == "custom":
+            distance_prefix = "custom "
+            g = self.custom_weighted_graph()
         else:
             g = self.weighted_graph()
         d, prev = shortest_path(g, a, b)
         if d is None:
             self.show_distance("No path found")
         else:
-            self.show_distance(f"Distance: {round(d,2)}")
+            self.show_distance(f"{distance_prefix}distance: {round(d,2)}")
 
-    def setup_path_compution(self, unweighted):
+    def setup_path_compution(self, weighting_type):
         if self.startnode and self.endnode and self.startnode in self.items() and self.endnode in self.items():
-            self.compute_shortest(self.startnode, self.endnode, unweighted)
+            self.compute_shortest(self.startnode, self.endnode, weighting_type)
         else:
             self.show_distance("No nodes selected")
