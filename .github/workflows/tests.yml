@@ -19,6 +19,11 @@ jobs:
 
       - uses: astral-sh/setup-uv@v6
 
+      - name: Install Qt system libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libegl1 libgl1
+
       - name: Install dependencies
         run: uv sync --locked --no-install-project
 
