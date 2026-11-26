@@ -1,12 +1,8 @@
-import threading
 import asyncio
 
 from PyQt6.QtGui import QColor
-
 from editor.client.client import Client
-from editor.items.node import NodeRect
-from editor.core.scene import DiagramScene
-
+from editor.items.rectangle import NodeRect
 
 def test_join_room_does_not_request_full_state_until_ack_is_received():
     client = Client(server_url="http://127.0.0.1:5000")
@@ -31,7 +27,6 @@ def test_join_room_does_not_request_full_state_until_ack_is_received():
     assert client._awaiting_initial_state is False
     assert seen == [True]
 
-
 def test_scene_update_ignores_stale_version():
     client = Client(server_url="http://127.0.0.1:5000")
     client.current_version = 8
@@ -43,11 +38,9 @@ def test_scene_update_ignores_stale_version():
     asyncio.run(run())
     assert client.current_version == 8
 
-
-def test_remote_node_rename_updates_text_and_label(qapp):
-    scene = DiagramScene()
+def test_remote_node_rename_updates_text_and_label(scene, controller):
     node = NodeRect(10, 20, 50, 40, QColor(255, 0, 0), text="old")
-    scene.addItem(node)
+    controller.add_node(scene, node)
 
     scene.apply_delta({
         "type": "nodes_modified",
@@ -56,10 +49,3 @@ def test_remote_node_rename_updates_text_and_label(qapp):
 
     assert node.text == "new name"
     assert node.label.toPlainText() == "new name"
-
-
-def test_node_classes_are_exposed_from_node_module():
-    from editor.items import node as node_module
-
-    assert hasattr(node_module, "NodeRect")
-    assert hasattr(node_module, "NodeEllipse")

@@ -10,9 +10,11 @@ class RenameNodeCommand(QUndoCommand):
     
     def redo(self):
         if not self.renamed:
+            self.node.text = self.new_text
             self.node.label.setPlainText(self.new_text)
             self.renamed = True
     
     def undo(self):
+        self.node.text = self.old_text
         self.node.label.setPlainText(self.old_text)
         self.renamed = False
