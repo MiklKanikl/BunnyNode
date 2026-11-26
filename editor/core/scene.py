@@ -644,6 +644,8 @@ class DiagramScene(QGraphicsScene):
                 id_map["nodes"][node.id] = node
                 if self.controller and not online:
                     self.controller.add_node(self, node)
+                elif not online:
+                    self.addItem(node)
                 elif online:
                     self.addItem(node)
             else:
@@ -659,6 +661,8 @@ class DiagramScene(QGraphicsScene):
                 id_map["edges"][edge.id] = edge
                 if self.controller and not online:
                     self.controller.add_node(self, edge)
+                elif not online:
+                    self.addItem(edge)
                 elif online:
                     self.addItem(edge)
 
